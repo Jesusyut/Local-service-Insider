@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Service Insider — Direct mail to homeowners searching for you</title>
+<meta name="description" content="We mail homeowners who are actively searching for your service. Fixed cost, exclusive territory, no shared leads. Get a free sample and quote.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Archivo+Black&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="bar">
+  <span class="bar__mark">Local Service Insider</span>
+  <span class="bar__meta">Presorted Std &middot; Phoenix Metro</span>
+</header>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero__type">
+      <p class="eyebrow">Direct mail &middot; intent targeted</p>
+      <h1>
+        Your best customers<br>
+        aren't scrolling.<br>
+        <em>They're working.</em>
+      </h1>
+      <p class="lede">
+        We mail the homeowners in your ZIP codes who are actively searching
+        for your service right now. They read it at the kitchen counter,
+        not between two ads.
+      </p>
+      <a class="btn btn--primary" href="#quote">Get a free sample and quote</a>
+      <p class="micro">No contract. We'll show you the piece before you spend anything.</p>
+    </div>
+
+    <!-- SIGNATURE: scroll-driven postcard -->
+    <div class="stage" aria-hidden="true">
+      <div class="stage__shadow"></div>
+      <div class="card" id="card">
+        <div class="card__face card__face--front">
+          <div class="card__art">
+            <span class="card__kicker">While you were on the job</span>
+            <strong class="card__hed">Someone two streets over<br>looked you up.</strong>
+          </div>
+          <div class="card__strip">
+            <span>Local Service Insider</span><span>ZIP 85224</span>
+          </div>
+        </div>
+        <div class="card__face card__face--back">
+          <div class="card__postmark">
+            <span>DELIVERED</span>
+            <b>085</b>
+            <span>PHX AZ</span>
+          </div>
+          <div class="card__indicia">
+            PRSRT STD<br>U.S. POSTAGE<br>PAID<br>PERMIT NO. 118
+          </div>
+          <div class="card__note">
+            Mailed only to households<br>
+            showing active search intent<br>
+            in the last 30 days.
+          </div>
+          <div class="card__address">
+            <span>CURRENT RESIDENT</span>
+            <span>4418 E PALM CANYON DR</span>
+            <span>CHANDLER AZ 85224</span>
+          </div>
+          <div class="card__barcode"></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="scrollhint">Scroll to turn it over</p>
+  </section>
+
+  <!-- ============ THREE CLAIMS ============ -->
+  <section class="claims">
+
+    <article class="claim reveal">
+      <p class="claim__label">Cost</p>
+      <h2>A fixed cost that compounds.</h2>
+      <p>
+        Ad platforms reprice you every morning. Your cost per click goes up
+        because someone else raised their bid, and you find out after the
+        money's gone. A mail drop costs what it costs — the same spend buys
+        the same reach next month and the month after. Meanwhile the third
+        time a homeowner sees your name, they already know it.
+      </p>
+    </article>
+
+    <article class="claim reveal">
+      <p class="claim__label">Attention</p>
+      <h2>Most of your buyers aren't on Facebook.</h2>
+      <p>
+        The homeowner who books a $9,000 job is not scrolling at 2pm. She's
+        at work, and so is her husband, and the ad you paid for ran while
+        both their phones were face down on a desk. Mail doesn't need them
+        free at the moment it arrives. It sits on the counter until they are.
+      </p>
+    </article>
+
+    <article class="claim reveal">
+      <p class="claim__label">Targeting</p>
+      <h2>Intent, not impressions.</h2>
+      <p>
+        We don't mail a neighborhood and hope. We mail households showing
+        active search signals for your service in the last 30 days, inside
+        the ZIP codes you actually drive to. One contractor per trade, per
+        territory — your piece never lands next to a competitor's, and the
+        lead is never resold.
+      </p>
+    </article>
+
+  </section>
+
+  <!-- ============ CONTRAST ============ -->
+  <section class="ledger reveal">
+    <h2 class="ledger__hed">What you're comparing it to</h2>
+    <div class="ledger__grid">
+      <div class="ledger__col">
+        <p class="ledger__cap">Shared lead services</p>
+        <ul>
+          <li>Same lead sold to three or four contractors</li>
+          <li>You're bidding against price, not selling value</li>
+          <li>Cost per lead climbs with demand</li>
+          <li>Race to answer first</li>
+        </ul>
+      </div>
+      <div class="ledger__col ledger__col--ours">
+        <p class="ledger__cap">Local Service Insider</p>
+        <ul>
+          <li>Exclusive — one contractor per trade, per territory</li>
+          <li>They call you because they picked you</li>
+          <li>Fixed cost per drop, quoted before you commit</li>
+          <li>Your name in the house for weeks</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FORM ============ -->
+  <section class="quote" id="quote">
+    <div class="quote__type">
+      <p class="eyebrow eyebrow--light">Step one</p>
+      <h2>See the actual piece first.</h2>
+      <p>
+        Tell us where you work and what you install. We'll send back a
+        sample postcard built for your trade, the household count in your
+        territory, and what a drop costs. No call required to get it.
+      </p>
+    </div>
+
+    <form class="form" id="quoteForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" novalidate>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" autocomplete="name" required>
+        <p class="err" data-for="name">Add your name so we know who to send it to.</p>
+      </div>
+
+      <div class="field">
+        <label for="phone">Mobile number</label>
+        <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required>
+        <p class="err" data-for="phone">Enter a 10-digit number we can text the sample to.</p>
+      </div>
+
+      <div class="field">
+        <label for="website">Website <span class="opt">or Facebook page</span></label>
+        <input id="website" name="website" type="text" autocomplete="url" required>
+        <p class="err" data-for="website">Add a link so we can match the design to your brand.</p>
+      </div>
+
+      <button class="btn btn--primary btn--full" type="submit">Send my free sample and quote</button>
+      <p class="micro micro--light">We'll text it over. One message, and we don't sell your info.</p>
+      <p class="formstate" id="formstate" role="status"></p>
+    </form>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <span>Local Service Insider</span>
+  <span>Phoenix Metro &middot; Chandler &middot; Gilbert &middot; Mesa &middot; Scottsdale</span>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
