@@ -7,9 +7,7 @@ Static site. No build step.
 1. **Form endpoint.** The lead form posts to the configured Zapier Catch Hook
    in `index.html`. Update the `<form action="...">` attribute if the Zap is
    replaced or its hook URL changes.
-2. **Fallback number.** `js/main.js`, search `000-000-0000`. This shows only
-   if the form POST fails.
-3. **Territory + permit.** `index.html` — the ZIP in the postcard strip, the
+2. **Territory + permit.** `index.html` — the ZIP in the postcard strip, the
    sample address, the permit number in the indicia, and the city list in
    the footer.
 
