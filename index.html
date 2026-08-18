@@ -1,191 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Local Service Insider — Direct mail to homeowners searching for you</title>
-<meta name="description" content="We mail homeowners who are actively searching for your service. Fixed cost, exclusive territory, no shared leads. Get a free sample and quote.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Archivo+Black&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2efdf">
+  <title>Local Service Insider — Intent-targeted direct mail</title>
+  <meta name="description" content="We mail homeowners actively searching for your service. Fixed cost, exclusive Phoenix Metro territories, and no shared leads.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ffd400'/%3E%3Cpath d='M13 14h12v29h25v10H13z' fill='%2311110f'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Roboto+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
-
-<header class="bar">
-  <span class="bar__mark">Local Service Insider</span>
-  <span class="bar__meta">Presorted Std &middot; Phoenix Metro</span>
-</header>
-
-<main>
-
-  <!-- ============ HERO ============ -->
-  <section class="hero">
-    <div class="hero__type">
-      <p class="eyebrow">Direct mail &middot; intent targeted</p>
-      <h1>
-        Your best customers<br>
-        aren't scrolling.<br>
-        <em>They're working.</em>
-      </h1>
-      <p class="lede">
-        We mail the homeowners in your ZIP codes who are actively searching
-        for your service right now. They read it at the kitchen counter,
-        not between two ads.
-      </p>
-      <a class="btn btn--primary" href="#quote">Get a free sample and quote</a>
-      <p class="micro">No contract. We'll show you the piece before you spend anything.</p>
-    </div>
-
-    <!-- SIGNATURE: scroll-driven postcard -->
-    <div class="stage" aria-hidden="true">
-      <div class="stage__shadow"></div>
-      <div class="card" id="card">
-        <div class="card__face card__face--front">
-          <div class="card__art">
-            <span class="card__kicker">While you were on the job</span>
-            <strong class="card__hed">Someone two streets over<br>looked you up.</strong>
-          </div>
-          <div class="card__strip">
-            <span>Local Service Insider</span><span>ZIP 85224</span>
-          </div>
-        </div>
-        <div class="card__face card__face--back">
-          <div class="card__postmark">
-            <span>DELIVERED</span>
-            <b>085</b>
-            <span>PHX AZ</span>
-          </div>
-          <div class="card__indicia">
-            PRSRT STD<br>U.S. POSTAGE<br>PAID<br>PERMIT NO. 118
-          </div>
-          <div class="card__note">
-            Mailed only to households<br>
-            showing active search intent<br>
-            in the last 30 days.
-          </div>
-          <div class="card__address">
-            <span>CURRENT RESIDENT</span>
-            <span>4418 E PALM CANYON DR</span>
-            <span>CHANDLER AZ 85224</span>
-          </div>
-          <div class="card__barcode"></div>
-        </div>
-      </div>
-    </div>
-
-    <p class="scrollhint">Scroll to turn it over</p>
+<a class="skip" href="#main">Skip to content</a>
+<header class="head"><a href="#top">Local Service Insider</a><p>Phoenix Metro ↘</p></header>
+<main id="main">
+  <section class="hero" id="top">
+    <p class="eyebrow">Intent-targeted direct mail <span>01 / 08</span></p>
+    <h1><span>Your best customers</span><b>AREN’T SCROLLING.</b><em>They’re working.</em></h1>
+    <div class="hero-copy"><p>We mail the homeowners in your ZIP codes who are actively searching for your service right now. They read it at the kitchen counter—not between two ads.</p><a class="button" href="#quote">Get a free sample + quote <span>↘</span></a><small>No contract. See the piece before you spend anything.</small></div>
+    <p class="hero-note">One contractor<br>per trade<br>per territory.</p>
+    <a class="scroll" href="#postcard">See how it lands ↓</a>
   </section>
 
-  <!-- ============ THREE CLAIMS ============ -->
-  <section class="claims">
-
-    <article class="claim reveal">
-      <p class="claim__label">Cost</p>
-      <h2>A fixed cost that compounds.</h2>
-      <p>
-        Ad platforms reprice you every morning. Your cost per click goes up
-        because someone else raised their bid, and you find out after the
-        money's gone. A mail drop costs what it costs — the same spend buys
-        the same reach next month and the month after. Meanwhile the third
-        time a homeowner sees your name, they already know it.
-      </p>
-    </article>
-
-    <article class="claim reveal">
-      <p class="claim__label">Attention</p>
-      <h2>Most of your buyers aren't on Facebook.</h2>
-      <p>
-        The homeowner who books a $9,000 job is not scrolling at 2pm. She's
-        at work, and so is her husband, and the ad you paid for ran while
-        both their phones were face down on a desk. Mail doesn't need them
-        free at the moment it arrives. It sits on the counter until they are.
-      </p>
-    </article>
-
-    <article class="claim reveal">
-      <p class="claim__label">Targeting</p>
-      <h2>Intent, not impressions.</h2>
-      <p>
-        We don't mail a neighborhood and hope. We mail households showing
-        active search signals for your service in the last 30 days, inside
-        the ZIP codes you actually drive to. One contractor per trade, per
-        territory — your piece never lands next to a competitor's, and the
-        lead is never resold.
-      </p>
-    </article>
-
-  </section>
-
-  <!-- ============ CONTRAST ============ -->
-  <section class="ledger reveal">
-    <h2 class="ledger__hed">What you're comparing it to</h2>
-    <div class="ledger__grid">
-      <div class="ledger__col">
-        <p class="ledger__cap">Shared lead services</p>
-        <ul>
-          <li>Same lead sold to three or four contractors</li>
-          <li>You're bidding against price, not selling value</li>
-          <li>Cost per lead climbs with demand</li>
-          <li>Race to answer first</li>
-        </ul>
-      </div>
-      <div class="ledger__col ledger__col--ours">
-        <p class="ledger__cap">Local Service Insider</p>
-        <ul>
-          <li>Exclusive — one contractor per trade, per territory</li>
-          <li>They call you because they picked you</li>
-          <li>Fixed cost per drop, quoted before you commit</li>
-          <li>Your name in the house for weeks</li>
-        </ul>
-      </div>
+  <section class="story" id="postcard">
+    <div class="story-sticky">
+      <div class="story-title"><p class="eyebrow light">The piece <span>02 / 08</span></p><h2>From active search<br><em>to kitchen counter.</em></h2></div>
+      <div class="stage"><div class="shadow"></div><div class="postcard" id="postcardCard" aria-label="Postcard rotating from front to addressed reverse">
+        <div class="face front"><div class="card-top"><span>Home services / Chandler</span><span>85224</span></div><div class="card-copy"><i>While you were<br>on the job,</i><strong>someone two streets over looked you up.</strong></div><div class="card-top"><span>Local Service Insider</span><span>Keep this card →</span></div></div>
+        <div class="face back"><div class="message"><small>Why this address?</small><strong>This household showed active search intent for your service in the last 30 days.</strong><span>Right service. Right ZIP. Your name only.</span></div><div class="mail"><div class="indicia">PRSRT STD<br>U.S. POSTAGE<br><b>PAID</b><br>PERMIT NO. 118</div><div class="postmark">PHX AZ<br><b>085</b><br>DELIVERED</div><address>CURRENT RESIDENT<br>4418 E PALM CANYON DR<br>CHANDLER AZ 85224</address><div class="barcode"></div></div></div>
+      </div></div>
+      <div class="notes"><p class="note active"><span>01</span> Built for the trade and territory.</p><p class="note"><span>02</span> Mailed to households showing recent intent.</p><p class="note"><span>03</span> Addressed, tangible, and yours alone.</p></div>
     </div>
   </section>
 
-  <!-- ============ FORM ============ -->
-  <section class="quote" id="quote">
-    <div class="quote__type">
-      <p class="eyebrow eyebrow--light">Step one</p>
-      <h2>See the actual piece first.</h2>
-      <p>
-        Tell us where you work and what you install. We'll send back a
-        sample postcard built for your trade, the household count in your
-        territory, and what a drop costs. No call required to get it.
-      </p>
-    </div>
+  <section class="compound pad"><div class="index"><span>03</span><span>The economics</span></div><div class="compound-copy reveal"><p class="eyebrow">Cost, without the auction</p><h2>A fixed cost<br><em>that compounds.</em></h2><p>Ad platforms reprice you every morning. A mail drop costs what it costs—the same spend buys the same reach next month and the month after. Meanwhile, repeat visibility makes your name familiar.</p></div><aside class="aside reveal"><p>Quoted before you commit.</p><p>Kept in the home for days or weeks.</p><p>Not repriced by a competitor’s bid.</p></aside></section>
 
-    <form class="form" id="quoteForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" novalidate>
-      <div class="field">
-        <label for="name">Your name</label>
-        <input id="name" name="name" type="text" autocomplete="name" required>
-        <p class="err" data-for="name">Add your name so we know who to send it to.</p>
-      </div>
+  <section class="compare pad"><div class="index light"><span>04</span><span>Side by side</span></div><h2 class="reveal">Rent the click.<br><em>Own the introduction.</em></h2><div class="compare-grid"><article class="compare-col reveal"><p class="label">Auction-based digital</p><ol><li><span>01</span>Price moves with competition</li><li><span>02</span>Attention disappears with the scroll</li><li><span>03</span>Shared leads create a race to answer</li><li><span>04</span>You keep paying to be remembered</li></ol></article><article class="compare-col yellow reveal"><p class="label">Local Service Insider</p><ol><li><span>01</span>Fixed drop cost, known upfront</li><li><span>02</span>A physical piece stays in the house</li><li><span>03</span>One contractor per trade and territory</li><li><span>04</span>They call because they picked you</li></ol></article></div></section>
 
-      <div class="field">
-        <label for="phone">Mobile number</label>
-        <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required>
-        <p class="err" data-for="phone">Enter a 10-digit number we can text the sample to.</p>
-      </div>
+  <section class="process pad"><div class="index"><span>05</span><span>The route</span></div><div class="process-title reveal"><p class="eyebrow">Three steps. No mystery.</p><h2>Search signal<br><em>to doorstep.</em></h2></div><ol class="steps"><li class="reveal"><span>01</span><div><h3>Choose the ground.</h3><p>Tell us what you install and the ZIP codes you actually drive to.</p></div></li><li class="reveal"><span>02</span><div><h3>Make the piece.</h3><p>We build a postcard for your trade and show it to you before a drop.</p></div></li><li class="reveal"><span>03</span><div><h3>Reach active households.</h3><p>We mail households showing recent search intent inside your territory.</p></div></li></ol></section>
 
-      <div class="field">
-        <label for="website">Website <span class="opt">or Facebook page</span></label>
-        <input id="website" name="website" type="text" autocomplete="url" required>
-        <p class="err" data-for="website">Add a link so we can match the design to your brand.</p>
-      </div>
+  <section class="territory pad"><div class="index light"><span>06</span><span>Phoenix Metro</span></div><div class="territory-copy reveal"><p class="eyebrow light">Territory, not a radius</p><h2>Your ZIPs.<br><em>Your trade.</em><br>Your card.</h2><p>Campaigns are scoped to the places you want to work: Chandler, Gilbert, Mesa, Scottsdale, and the Phoenix Metro territory configured for your drop.</p></div><div class="zips"><span>85224</span><span>CHANDLER</span><span>PHOENIX METRO</span><span>ONE TRADE</span></div></section>
 
-      <button class="btn btn--primary btn--full" type="submit">Send my free sample and quote</button>
-      <p class="micro micro--light">We'll text it over. One message, and we don't sell your info.</p>
-      <p class="formstate" id="formstate" role="status"></p>
+  <section class="principles pad"><div class="index"><span>07</span><span>How we operate</span></div><h2 class="reveal">No borrowed credibility.<br><em>Just clear operating principles.</em></h2><div class="principle-grid"><article class="reveal"><span>01</span><h3>Exclusive</h3><p>One contractor per trade, per territory. The lead is never resold.</p></article><article class="reveal"><span>02</span><h3>Visible</h3><p>You see the piece and quoted drop cost before committing.</p></article><article class="reveal"><span>03</span><h3>Intent-led</h3><p>Households are selected for active service-search signals, not broad impressions.</p></article></div></section>
+
+  <section class="quote pad" id="quote"><div class="index"><span>08</span><span>Start with the piece</span></div><div class="quote-title"><p class="eyebrow">Free sample + quote</p><h2>See what lands<br><em>before it mails.</em></h2><p>Tell us where you work and what you install. We’ll send a sample postcard built for your trade, the household count in your territory, and what a drop costs. No call required.</p></div>
+    <form id="quoteForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" novalidate>
+      <div class="field"><label for="name"><span>01</span> Your name</label><input id="name" name="name" autocomplete="name" required aria-describedby="name-error"><p class="error" id="name-error">Add your name so we know who to send it to.</p></div>
+      <div class="field"><label for="phone"><span>02</span> Mobile number</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="phone-error"><p class="error" id="phone-error">Enter a 10-digit number we can text the sample to.</p></div>
+      <div class="field"><label for="website"><span>03</span> Website or Facebook page</label><input id="website" name="website" autocomplete="url" required aria-describedby="website-error"><p class="error" id="website-error">Add a link so we can match the design to your brand.</p></div>
+      <button class="button dark" type="submit">Send my free sample + quote <span>↗</span></button><p class="privacy">We’ll text it over. One message, and we don’t sell your info.</p><p id="formstate" role="status" aria-live="polite"></p>
     </form>
   </section>
-
 </main>
-
-<footer class="foot">
-  <span>Local Service Insider</span>
-  <span>Phoenix Metro &middot; Chandler &middot; Gilbert &middot; Mesa &middot; Scottsdale</span>
-</footer>
-
-<script src="js/main.js"></script>
-</body>
-</html>
+<footer><p>Local Service Insider</p><p>Phoenix Metro · Chandler · Gilbert · Mesa · Scottsdale</p><a href="#top">Back to top ↑</a></footer>
+<script src="./js/main.js" defer></script>
+</body></html>

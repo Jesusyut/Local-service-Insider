@@ -1,0 +1,16 @@
+(function(){
+'use strict';
+var motion=window.matchMedia('(prefers-reduced-motion: reduce)'),story=document.querySelector('.story'),card=document.getElementById('postcardCard'),notes=[].slice.call(document.querySelectorAll('.note')),pending=false;
+function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
+function draw(){pending=false;if(!story||!card||motion.matches)return;var r=story.getBoundingClientRect(),travel=Math.max(1,r.height-innerHeight),p=clamp(-r.top/travel,0,1),e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,rot=-18+e*198,lift=Math.sin(p*Math.PI)*-28,scale=.86+Math.sin(p*Math.PI)*.14;card.style.transform='translate3d(0,'+lift.toFixed(1)+'px,0) rotateX('+(7-e*3).toFixed(1)+'deg) rotateY('+rot.toFixed(1)+'deg) scale('+scale.toFixed(3)+')';var active=p<.34?0:p<.7?1:2;notes.forEach(function(n,i){n.classList.toggle('active',i===active)})}
+function requestDraw(){if(!pending){pending=true;requestAnimationFrame(draw)}}
+if(story&&card&&!motion.matches){addEventListener('scroll',requestDraw,{passive:true});addEventListener('resize',requestDraw,{passive:true});requestDraw()}
+if(motion.addEventListener)motion.addEventListener('change',function(){if(motion.matches&&card)card.removeAttribute('style');requestDraw()});
+var reveals=document.querySelectorAll('.reveal');
+if(motion.matches||!('IntersectionObserver'in window)){[].forEach.call(reveals,function(el){el.classList.add('visible')})}else{var io=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add('visible');io.unobserve(entry.target)}})},{threshold:.12,rootMargin:'0px 0px -8%'});[].forEach.call(reveals,function(el){io.observe(el)})}
+var form=document.getElementById('quoteForm');if(!form)return;var state=document.getElementById('formstate'),rules={name:function(v){return v.trim().length>=2},phone:function(v){var d=v.replace(/\D/g,'');return d.length===10||(d.length===11&&d[0]==='1')},website:function(v){return v.trim().length>=4}};
+function setError(input,bad){var error=document.getElementById(input.id+'-error');input.setAttribute('aria-invalid',bad?'true':'false');if(error)error.classList.toggle('show',bad)}
+function validate(){var ok=true;Object.keys(rules).forEach(function(name){var input=form.elements[name],valid=rules[name](input.value);setError(input,!valid);if(!valid)ok=false});return ok}
+Object.keys(rules).forEach(function(name){var input=form.elements[name];input.addEventListener('blur',function(){if(input.value)setError(input,!rules[name](input.value))});input.addEventListener('input',function(){if(rules[name](input.value))setError(input,false)})});
+form.addEventListener('submit',function(event){event.preventDefault();state.textContent='';if(!validate()){var bad=form.querySelector('[aria-invalid="true"]');if(bad)bad.focus();return}var button=form.querySelector('button[type="submit"]'),label=button.innerHTML;button.disabled=true;button.textContent='Sending…';fetch(form.action,{method:'POST',body:new FormData(form),headers:{Accept:'application/json'}}).then(function(res){if(!res.ok)throw Error();form.reset();state.textContent='Got it. Your sample and quote go out within one business day.'}).catch(function(){state.textContent='That didn’t send. Text 000-000-0000 and we’ll set it up directly.'}).then(function(){button.disabled=false;button.innerHTML=label})});
+})();

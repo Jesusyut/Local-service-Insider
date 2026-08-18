@@ -46,3 +46,6 @@ js/main.js      postcard scroll flip, reveals, form
 
 The postcard flip is CSS 3D driven by scroll position — no Three.js, so the
 page stays light on a phone over LTE. `prefers-reduced-motion` is respected.
+
+Asset references are case-correct and deployment-safe: `./css/styles.css`
+and `./js/main.js`.
