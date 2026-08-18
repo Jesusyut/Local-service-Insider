@@ -37,8 +37,11 @@ python3 -m http.server 8000
 
 ```
 index.html      markup + copy
+pricing/        private, unlinked campaign-options page
 css/styles.css  all styling
+css/pricing.css pricing-page styling
 js/main.js      postcard scroll flip, reveals, form
+js/pricing.js   selected campaign interest for pricing leads
 ```
 
 The postcard flip is CSS 3D driven by scroll position — no Three.js, so the
