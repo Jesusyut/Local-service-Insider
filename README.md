@@ -4,10 +4,9 @@ Static site. No build step.
 
 ## Before you deploy — three edits
 
-1. **Form endpoint.** `index.html`, the `<form action="...">` attribute.
-   Create a form at https://formspree.io, paste your endpoint in.
-   (Any endpoint that accepts a POST and returns JSON works — Formspree,
-   Basin, or your own webhook.)
+1. **Form endpoint.** The lead form posts to the configured Zapier Catch Hook
+   in `index.html`. Update the `<form action="...">` attribute if the Zap is
+   replaced or its hook URL changes.
 2. **Fallback number.** `js/main.js`, search `000-000-0000`. This shows only
    if the form POST fails.
 3. **Territory + permit.** `index.html` — the ZIP in the postcard strip, the
