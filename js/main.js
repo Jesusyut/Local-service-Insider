@@ -1,16 +1,76 @@
+const FORM_ENDPOINT = "https://hooks.zapier.com/hooks/catch/22797974/4tdcudh/";
+const SLOTS_REMAINING = 4;
+const NEXT_DROP_DATE = "September 15, 2026";
+const FALLBACK_PHONE = "";
+const SERVICE_ZIPS = ["85224", "85225", "85226"];
+
 (function(){
-'use strict';
-var motion=window.matchMedia('(prefers-reduced-motion: reduce)'),story=document.querySelector('.story'),card=document.getElementById('postcardCard'),notes=[].slice.call(document.querySelectorAll('.note')),pending=false;
-function clamp(v,a,b){return Math.min(b,Math.max(a,v))}
-function draw(){pending=false;if(!story||!card||motion.matches)return;var r=story.getBoundingClientRect(),travel=Math.max(1,r.height-innerHeight),p=clamp(-r.top/travel,0,1),e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,rot=-18+e*198,lift=Math.sin(p*Math.PI)*-28,scale=.86+Math.sin(p*Math.PI)*.14;card.style.transform='translate3d(0,'+lift.toFixed(1)+'px,0) rotateX('+(7-e*3).toFixed(1)+'deg) rotateY('+rot.toFixed(1)+'deg) scale('+scale.toFixed(3)+')';var active=p<.34?0:p<.7?1:2;notes.forEach(function(n,i){n.classList.toggle('active',i===active)})}
-function requestDraw(){if(!pending){pending=true;requestAnimationFrame(draw)}}
-if(story&&card&&!motion.matches){addEventListener('scroll',requestDraw,{passive:true});addEventListener('resize',requestDraw,{passive:true});requestDraw()}
-if(motion.addEventListener)motion.addEventListener('change',function(){if(motion.matches&&card)card.removeAttribute('style');requestDraw()});
-var reveals=document.querySelectorAll('.reveal');
-if(motion.matches||!('IntersectionObserver'in window)){[].forEach.call(reveals,function(el){el.classList.add('visible')})}else{var io=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add('visible');io.unobserve(entry.target)}})},{threshold:.12,rootMargin:'0px 0px -8%'});[].forEach.call(reveals,function(el){io.observe(el)})}
-var form=document.getElementById('quoteForm');if(!form)return;var state=document.getElementById('formstate'),rules={name:function(v){return v.trim().length>=2},phone:function(v){var d=v.replace(/\D/g,'');return d.length===10||(d.length===11&&d[0]==='1')},website:function(v){return v.trim().length>=4}};
-function setError(input,bad){var error=document.getElementById(input.id+'-error');input.setAttribute('aria-invalid',bad?'true':'false');if(error)error.classList.toggle('show',bad)}
-function validate(){var ok=true;Object.keys(rules).forEach(function(name){var input=form.elements[name],valid=rules[name](input.value);setError(input,!valid);if(!valid)ok=false});return ok}
-Object.keys(rules).forEach(function(name){var input=form.elements[name];input.addEventListener('blur',function(){if(input.value)setError(input,!rules[name](input.value))});input.addEventListener('input',function(){if(rules[name](input.value))setError(input,false)})});
-form.addEventListener('submit',function(event){event.preventDefault();state.textContent='';if(!validate()){var bad=form.querySelector('[aria-invalid="true"]');if(bad)bad.focus();return}var button=form.querySelector('button[type="submit"]'),label=button.innerHTML,data=new FormData(form);data.append('submitted_at',new Date().toISOString());data.append('page_url',window.location.href);button.disabled=true;button.textContent='Sending…';fetch(form.action,{method:'POST',body:data,mode:'no-cors'}).then(function(){form.reset();state.textContent=form.getAttribute('data-success')||'You’re in. Your custom sample and quote will arrive by text within 24 hours.';if(typeof window.fbq==='function')window.fbq('track','Lead')}).catch(function(){state.textContent='We couldn’t send that right now. Please check your connection and try again.'}).then(function(){button.disabled=false;button.innerHTML=label})});
+  "use strict";
+  const reduced=window.matchMedia("(prefers-reduced-motion: reduce)");
+  const progress=document.getElementById("readingProgress");
+  const article=document.getElementById("guide");
+  let framePending=false;
+
+  function drawProgress(){
+    framePending=false;
+    if(!progress||!article||reduced.matches)return;
+    const start=article.offsetTop;
+    const distance=Math.max(1,article.offsetHeight-window.innerHeight);
+    const value=Math.min(1,Math.max(0,(window.scrollY-start)/distance));
+    progress.style.transform="scaleX("+value.toFixed(4)+")";
+  }
+  function requestProgress(){if(!framePending){framePending=true;window.requestAnimationFrame(drawProgress)}}
+  if(progress&&article&&!reduced.matches){window.addEventListener("scroll",requestProgress,{passive:true});window.addEventListener("resize",requestProgress,{passive:true});requestProgress()}
+
+  const reveals=document.querySelectorAll(".reveal");
+  if(reduced.matches||!("IntersectionObserver" in window)){reveals.forEach(function(el){el.classList.add("is-visible")})}
+  else{const observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add("is-visible");observer.unobserve(entry.target)}})},{threshold:.08,rootMargin:"0px 0px -7%"});reveals.forEach(function(el){observer.observe(el)})}
+
+  const slotCount=document.getElementById("slotCount");
+  const dropDate=document.getElementById("dropDate");
+  if(slotCount)slotCount.textContent=SLOTS_REMAINING+" exclusive slots remain";
+  if(dropDate){dropDate.textContent=NEXT_DROP_DATE;dropDate.setAttribute("datetime","2026-09-15")}
+
+  const form=document.getElementById("offerForm");
+  if(!form)return;
+  form.action=FORM_ENDPOINT;
+  const status=document.getElementById("formStatus");
+  const messages={
+    name:"Add your name so we know who the mockup is for.",
+    phone:"Enter a 10-digit mobile number.",
+    website:"Add your website or Facebook page.",
+    trade:"Choose the trade you want the piece built for.",
+    zipCodes:"Add at least one 5-digit ZIP code."
+  };
+  const rules={
+    name:function(v){return v.trim().length>=2},
+    phone:function(v){const d=v.replace(/\D/g,"");return d.length===10||(d.length===11&&d.charAt(0)==="1")},
+    website:function(v){return v.trim().length>0},
+    trade:function(v){return v.trim().length>0},
+    zipCodes:function(v){return /(?:^|[\s,])\d{5}(?:-\d{4})?(?=$|[\s,])/.test(v.trim())}
+  };
+  function showError(input,invalid){
+    const target=document.getElementById(input.id+"Error");
+    input.setAttribute("aria-invalid",invalid?"true":"false");
+    if(target)target.textContent=invalid?messages[input.id]:"";
+  }
+  function validate(){
+    let valid=true;
+    Object.keys(rules).forEach(function(id){const input=document.getElementById(id);const good=rules[id](input.value);showError(input,!good);if(!good)valid=false});
+    return valid;
+  }
+  Object.keys(rules).forEach(function(id){const input=document.getElementById(id);input.addEventListener("blur",function(){showError(input,!rules[id](input.value))});input.addEventListener("input",function(){if(rules[id](input.value))showError(input,false)})});
+  form.addEventListener("submit",function(event){
+    event.preventDefault();status.textContent="";
+    if(!validate()){const first=form.querySelector("[aria-invalid=true]");if(first)first.focus();return}
+    const button=form.querySelector("button[type=submit]"),label=button.innerHTML,data=new FormData(form);
+    data.append("submitted_at",new Date().toISOString());data.append("page_url",window.location.href);data.append("slots_remaining",String(SLOTS_REMAINING));data.append("next_drop_date",NEXT_DROP_DATE);
+    button.disabled=true;button.textContent="Sending…";
+    fetch(FORM_ENDPOINT,{method:"POST",body:data,mode:"no-cors"}).then(function(){
+      form.reset();status.textContent="Received. Your free mockup and custom order size will arrive by text within 24 hours.";
+      if(typeof window.fbq==="function")window.fbq("track","Lead");
+    }).catch(function(){
+      status.textContent=FALLBACK_PHONE?"We couldn’t send that. Text "+FALLBACK_PHONE+" and we’ll handle it directly.":"We couldn’t send that right now. Check your connection and try again.";
+    }).then(function(){button.disabled=false;button.innerHTML=label});
+  });
 })();

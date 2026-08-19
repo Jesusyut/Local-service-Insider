@@ -11,6 +11,9 @@ services:
         value: SAMEORIGIN
     routes:
       - type: rewrite
+        source: /offer
+        destination: /offer.html
+      - type: rewrite
         source: /pricing
         destination: /pricing/index.html
       - type: rewrite

@@ -1,31 +1,24 @@
-# Local Service Insider — landing page
+# Local Service Insider — two-page funnel
 
-Static site. No build step.
+Static HTML, CSS, and vanilla JavaScript. No build step.
 
-## Before you deploy — three edits
+## Funnel
 
-1. **Form endpoint.** The lead form posts to the configured Zapier Catch Hook
-   in `index.html`. Update the `<form action="...">` attribute if the Zap is
-   replaced or its hook URL changes.
-2. **Territory + permit.** `index.html` — the ZIP in the postcard strip, the
-   sample address, the permit number in the indicia, and the city list in
-   the footer.
+- `index.html` — seven-minute editorial guide and ad destination.
+- `offer.html` — free mockup and custom order-size conversion page.
+- `pricing/index.html` — private, unlinked campaign-options page.
 
-## Deploy on Render
+## Edit before launch
 
-```bash
-git init
-git add .
-git commit -m "LSI landing page"
-git remote add origin git@github.com:YOURNAME/lsi-site.git
-git push -u origin main
-```
+The campaign constants live at the top of `js/main.js`:
 
-Then in Render: New → Static Site → connect the repo.
-- Build command: leave empty
-- Publish directory: `.`
+- `FORM_ENDPOINT` — lead webhook. Currently configured to the LSI Zapier Catch Hook.
+- `SLOTS_REMAINING` — honest count of exclusive slots in the current publication.
+- `NEXT_DROP_DATE` — next scheduled mail drop. Keep the matching `datetime` value in sync.
+- `FALLBACK_PHONE` — optional phone used only after a failed request. It is intentionally blank until a real number is supplied.
+- `SERVICE_ZIPS` — current service ZIP reference list.
 
-`render.yaml` is included, so you can also use Blueprints instead.
+Also review territory and permit details on the private pricing page before launch.
 
 ## Local preview
 
@@ -33,19 +26,8 @@ Then in Render: New → Static Site → connect the repo.
 python3 -m http.server 8000
 ```
 
-## Structure
+Then open `/`, `/offer.html`, and `/pricing/`.
 
-```
-index.html      markup + copy
-pricing/        private, unlinked campaign-options page
-css/styles.css  all styling
-css/pricing.css pricing-page styling
-js/main.js      postcard scroll flip, reveals, form
-js/pricing.js   selected campaign interest for pricing leads
-```
+## Render
 
-The postcard flip is CSS 3D driven by scroll position — no Three.js, so the
-page stays light on a phone over LTE. `prefers-reduced-motion` is respected.
-
-Asset references are case-correct and deployment-safe: `./css/styles.css`
-and `./js/main.js`.
+`render.yaml` publishes the repository root with no build command and includes clean rewrites for `/offer` and `/pricing`.
