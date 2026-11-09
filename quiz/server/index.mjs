@@ -1,3 +1,4 @@
+if(process.env.RENDER_EXTERNAL_URL)process.env.PUBLIC_ORIGIN=process.env.RENDER_EXTERNAL_URL;
 import {openDatabase} from './db.mjs';
 import {createApp} from './app.mjs';
 const db=await openDatabase();
