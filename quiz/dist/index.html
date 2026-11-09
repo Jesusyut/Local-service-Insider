@@ -1,7 +1,38 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 
-<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111111"><meta name="description" content="Get a local lead and appointment-setting plan. Answer three quick questions."><title>Local Insider 03 | More Local Appointments</title><link rel="stylesheet" href="style.css"><script src="settings.js" defer></script><script src="lead-tracking.js" defer></script><script src="i18n.js" defer></script><script src="app.js" defer></script></head>
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111111"><meta name="description" content="Get a local lead and appointment-setting plan. Answer three quick questions."><title>Local Insider 03 | More Local Appointments</title><style id="funnel-styles">*{box-sizing:border-box}
+:root{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff;font-synthesis:none}
+body{margin:0;min-height:100svh;display:flex;flex-direction:column}
+button,input{font:inherit}button,a{touch-action:manipulation;-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:inherit}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #111;outline-offset:5px}[hidden]{display:none!important}
+header{width:100%;max-width:1160px;margin:0 auto;padding:34px 40px;display:flex;align-items:center;justify-content:space-between}
+.brand{text-decoration:none;font-size:29px;font-weight:700;letter-spacing:-1.5px;line-height:1}.brand span{display:block;font-size:9px;letter-spacing:1.7px;font-weight:400;margin-top:7px}
+.header-location{font-size:12px;color:#777}
+#landing{width:100%;max-width:880px;text-align:center;margin:auto;padding:58px 32px 52px}
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:2.2px;margin:0 0 27px;color:#777}
+h1{font-size:clamp(48px,6.5vw,82px);line-height:1.03;font-weight:550;letter-spacing:-4px;margin:0 0 27px;text-wrap:balance}
+h1 span{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:400;letter-spacing:-3px}
+#subheadline{font-size:17px;line-height:1.7;color:#666;max-width:465px;margin:0 auto 30px;text-wrap:pretty}
+.primary{display:flex;align-items:center;justify-content:space-between;gap:32px;min-height:56px;padding:17px 24px;border:1px solid #111;border-radius:0;background:#111;color:#fff;font-size:14px;font-weight:500;text-decoration:none;transition:background .15s}
+.primary:hover{background:#333}.primary span{font-size:20px;line-height:1}
+#landing .primary{width:280px;max-width:100%;margin:0 auto}.micro{font-size:11px;color:#777;margin:14px 0 0}.address{font-size:11px;color:#888;margin:55px 0 0}
+footer{width:100%;max-width:1160px;margin:0 auto;padding:24px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;color:#777;font-size:10px}
+footer div{display:flex;align-items:center;gap:7px}footer small{width:100%;font-size:9px;line-height:1.6;color:#888}.housing{font-size:16px}.divider{margin:0 5px}
+#quiz{width:100%;max-width:610px;margin:30px auto auto;padding:20px 32px 64px}.quiz-top{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#777}.back{border:0;background:none;font-size:12px;padding:10px 0;color:inherit}
+.progress{height:2px;background:#eee;margin:15px 0 48px}.progress>div{height:100%;background:#111;transition:width .15s}.question-kicker{font-size:9px;letter-spacing:1.7px;color:#888}
+h2{font-size:38px;line-height:1.15;letter-spacing:-1.4px;font-weight:500;margin:16px 0 30px;text-wrap:balance}
+.answer{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;border:0;border-bottom:1px solid #ddd;background:white;padding:21px 4px;font-size:17px;min-height:64px}
+.answer:hover,.answer.selected{background:#f6f6f6;border-color:#111}.answer span{font-size:20px}
+label{display:block;font-size:12px;margin:0 0 20px}input{width:100%;display:block;background:white;border:1px solid #ccc;border-radius:0;font-size:16px;padding:15px;margin-top:9px}
+.form-submit{width:100%;margin-top:25px}.consent{font-size:10px;line-height:1.7;color:#777}.error{font-size:12px;line-height:1.6;color:#a32626}.success-mark{font-size:35px}.success-body{font-size:16px;color:#666;line-height:1.7}.calendar{margin-top:28px}
+dialog{border:1px solid #ddd;max-width:500px;padding:30px}dialog::backdrop{background:#0005}dialog p{font-size:14px;line-height:1.7}
+@media(max-width:600px){header{padding:25px 24px}.brand{font-size:26px}.header-location{font-size:10px}#landing{padding:48px 24px 38px}h1{font-size:clamp(43px,10.5vw,62px);letter-spacing:-2.1px}h1 span{letter-spacing:-2px}#subheadline{font-size:15px;max-width:350px}.eyebrow{font-size:9px;margin-bottom:24px}.address{margin-top:40px;font-size:10px}footer{padding:24px;font-size:9px;gap:12px}footer small{font-size:8px}#quiz{margin-top:15px;padding:20px 24px 50px}h2{font-size:32px}.progress{margin-bottom:36px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.honeypot{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+
+.header-tools{display:flex;align-items:center;gap:24px}.language-toggle{display:flex;align-items:center;gap:2px}.language-toggle>span{font-size:10px;color:#bbb}.language-toggle button{font:inherit;font-size:11px;min-height:44px;padding:10px 8px;border:0;background:transparent;color:#777}.language-toggle button[aria-pressed="true"]{color:#111;text-decoration:underline;text-underline-offset:5px}.language-toggle button:disabled{cursor:wait;opacity:.5}@media(max-width:600px){.header-tools{gap:10px}.header-tools .header-location{display:none}.language-toggle button{font-size:10px;padding:10px 6px}}
+</style><script src="settings.js" defer></script><script src="lead-tracking.js" defer></script><script src="i18n.js" defer></script><script src="app.js" defer></script></head>
 <body><header><a class="brand" href="./" aria-label="Local Insider home">Local Insider<span>LOCAL LEADS. REAL CONNECTIONS.</span></a><div class="header-tools"><span class="header-location">Phoenix, Arizona</span><nav class="language-toggle" aria-label="Language / Idioma"><button type="button" lang="en" data-language="en" aria-pressed="true">English</button><span aria-hidden="true">/</span><button type="button" lang="es" data-language="es" aria-pressed="false">Español</button></nav></div></header>
 <main id="landing"><p class="eyebrow">LOCAL LEADS / APPOINTMENT SETTING</p><h1 id="headline">More Local Leads.<br>More Booked Calls.</h1><p id="subheadline">Answer 3 quick questions to find a lead generation and appointment-setting plan for your local service business.</p><button class="primary" data-start>Find My Plan <span>→</span></button><p class="micro" data-i18n="micro">3 quick questions. No commitment.</p><p class="address">Made for local service businesses</p></main>
 <main id="quiz" hidden><div class="quiz-shell"><div class="quiz-top"><button id="back" class="back">← Back</button><span id="step-label">Step 1 of 4</span></div><div class="progress"><div id="progress-fill"></div></div><div id="quiz-content" aria-live="polite"></div></div></main>
