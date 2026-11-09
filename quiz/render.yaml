@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: local-insider-03
+    runtime: node
+    rootDir: quiz
+    region: oregon
+    plan: free
+    buildCommand: npm install --omit=dev --ignore-scripts && DATABASE_URL= npm test
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: PUBLIC_ORIGIN
+        value: https://local-insider-03.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: local-insider-03-leads
+          property: connectionString
+      - key: ADMIN_USERNAME
+        value: caesar
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: FREE_TEST_MODE
+        value: "true"
