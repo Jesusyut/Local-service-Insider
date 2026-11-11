@@ -9,15 +9,15 @@ test('only seeded services are advertised; private pricing and service fallback 
  const check=await api('/api/check',vehicle);assert.equal(check.r.status,200);assert.equal(check.data.range,undefined);assert.notEqual(check.data.verdict,'No data');reportId=check.data.id;
  assert.equal((await api('/api/check',{...vehicle,option:'ppf:body'})).r.status,400);
  const fallback=(await api('/api/check',{...vehicle,option:'coating:unsure',noQuote:true})).data;assert.notEqual(fallback.verdict,'No data');
- const result=await api('/api/report',{id:fallback.id,firstName:'Fallback',email:'fallback@example.com',disclosureVersion:'weekly-deals-v3-phoenix'});assert.equal(result.data.range.source,'service-fallback');
+ const result=await api('/api/report',{id:fallback.id,firstName:'Fallback',email:'fallback@example.com',disclosureVersion:'weekly-deals-v4-local'});assert.equal(result.data.range.source,'service-fallback');
 });
 test('two-field email gate records disclosure with no ZIP or required checkbox',async()=>{
  assert.equal((await api('/api/admin/data')).r.status,401);const login=await api('/api/admin/login',{password:'test-owner-password'});cookie=login.r.headers.get('set-cookie').split(';')[0];
  assert.equal((await api('/api/report',{id:reportId,firstName:'Test',email:'test@example.com'})).r.status,400);
- const gate={id:reportId,firstName:'Test',email:'test@example.com',disclosureVersion:'weekly-deals-v3-phoenix'};
+ const gate={id:reportId,firstName:'Test',email:'test@example.com',disclosureVersion:'weekly-deals-v4-local'};
  const result=await api('/api/report',gate);assert.equal(result.r.status,200);assert.deepEqual(result.data.shops,[]);assert.equal(result.data.range.low,150);
  assert.equal((await api('/api/report',gate)).data.quoteId,result.data.quoteId);
- const {DatabaseSync}=await import('node:sqlite');const db=new DatabaseSync(join(dir,'test.db'));const s=db.prepare('SELECT * FROM subscribers WHERE email=?').get('test@example.com');assert.equal(s.zip,'');assert.equal(s.consent_text,"You'll also get our free weekly Phoenix deals. Unsubscribe anytime.");assert.ok(s.consent_at);db.close();
+ const {DatabaseSync}=await import('node:sqlite');const db=new DatabaseSync(join(dir,'test.db'));const s=db.prepare('SELECT * FROM subscribers WHERE email=?').get('test@example.com');assert.equal(s.zip,'');assert.equal(s.consent_text,"You'll also get our free weekly local deals. Unsubscribe anytime.");assert.ok(s.consent_at);db.close();
 });
 test('paid deals require two real offers; ZIP and partner consent are collected only at quote request',async()=>{
  async function shop(name,paid){assert.equal((await api('/api/admin/shop',{name,contact:name+'@example.com',services:['tint'],zips:['85001'],deal:'Actual paid offer '+name,active:true,vetted:true,paid},true)).r.status,200);}
