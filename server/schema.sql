@@ -9,3 +9,6 @@ CREATE TABLE IF NOT EXISTS checks(id TEXT PRIMARY KEY,payload TEXT NOT NULL,repo
 CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY,name TEXT NOT NULL,campaign TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS outbox(id TEXT PRIMARY KEY,kind TEXT NOT NULL,payload TEXT NOT NULL,status TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,last_error TEXT,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS service_content(service_id TEXT PRIMARY KEY,drivers TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS market_price_ranges(market TEXT NOT NULL,service_option_id TEXT REFERENCES services(id),vehicle_type TEXT NOT NULL,low REAL NOT NULL,typical REAL NOT NULL,high REAL NOT NULL,source_note TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(market,service_option_id,vehicle_type));
+CREATE TABLE IF NOT EXISTS market_service_ranges(market TEXT NOT NULL,service_id TEXT NOT NULL,vehicle_type TEXT NOT NULL,low REAL NOT NULL,typical REAL NOT NULL,high REAL NOT NULL,source_note TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(market,service_id,vehicle_type));
+CREATE TABLE IF NOT EXISTS partner_placements(shop_id TEXT PRIMARY KEY REFERENCES shops(id),paid_active INTEGER NOT NULL DEFAULT 0,market TEXT NOT NULL);

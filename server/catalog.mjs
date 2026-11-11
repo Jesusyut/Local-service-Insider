@@ -9,5 +9,5 @@ export const services=[
 ];
 export const options=services.flatMap(s=>s.options.map(([id,name])=>({id:`${s.id}:${id}`,name,service:s.name,serviceId:s.id})));
 export const drivers=['Vehicle size','Film or product brand','Warranty length','Prep work'];
-export const newsletterConsent='Send me the free weekly Phoenix car care deals email. Unsubscribe anytime.';
+export const newsletterConsent="You'll also get our free weekly San Diego deals. Unsubscribe anytime.";
 export const leadConsent="By tapping Get My Quotes, I agree that up to 3 local car care shops may contact me by call or text about my request, including by automated means. Consent isn't required to buy. Msg and data rates may apply.";

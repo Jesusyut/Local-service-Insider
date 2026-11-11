@@ -1,51 +1,42 @@
-# Phoenix Car Care Price Checker
+# San Diego Car Care Price Checker
 
-Campaign copy from the November 10 campaign deck is applied to the landing page, `?angle=quote|cost|heat` headlines, three-step funnel, teaser, gate, result, quote request and report email. Choice-only screens advance on a tap. Footer navigation appears only after the email gate; legal links remain below the email/quote buttons. Every screen sends a named event, and the owner dashboard measures capture against landing visits.
+Mobile-first San Diego County price checks, report email, weekly deals signup and optional shop quote requests. Node 24 serves the app; Render Postgres holds production records. Local development uses SQLite. The existing Render resource/hostname and Git branch retain their original technical names; customer-facing pages, reporting and pricing are San Diego-specific.
 
-The email uses the requested sender name, preview, subject and body, with a return button that restores answers directly into the quote request. Return links carry a private random report token in the URL fragment, are removed from the address bar immediately, and expire after 30 days. Treat them as private access links. Per-service price factors can be edited under Seed prices.
+## Current funnel
 
-Truthful exceptions to campaign copy: missing price data keeps the existing no-data message; the email confirmation appears only after Resend accepts the send; quote success says the request is queued rather than promising a text already happened. Outside-area ZIPs can still receive reports but get no partner routing, and their quotes do not contribute to Phoenix ranges. Lead notifications and lead CSV exports omit subscriber emails. Routing requires consent to the named shops and is capped at three. The deck requests legal review of its contact-consent text before selling leads; that review has not been performed.
+- Headline: “Is your quote fair?” Ad angles change the small line above it.
+- Time promise: “under a minute.” No claim of a measured 30-second completion time.
+- Vehicle, service and quote screens show only researched combinations. The public catalog exposes availability, not prices.
+- First name and email are the only email-gate fields. The button is followed by “You'll also get our free weekly San Diego deals. Unsubscribe anytime.” The server stores the disclosure text and timestamp; no newsletter checkbox is required.
+- ZIP is collected when requesting quotes. San Diego County coverage uses 919/920/921 prefixes; this is not postal-address verification.
+- No empty partner cards. At least two vetted, active, paid placements with actual deal text are required for the offers section. Use Shops in admin to mark a paid placement active. Quote routing still requires separate consent and goes to at most three named shops.
 
-A mobile-first Phoenix car-care price checker, built from the included development spec. Node 24 serves the frontend and API; Render Postgres stores production records. Local development uses Node's built-in SQLite. Price ranges never ship in the public catalog or teaser API.
+## Pricing and research
 
-## Run locally
+See [PRICING-SOURCES.md](PRICING-SOURCES.md). Bundled San Diego research seeds load idempotently into market-specific tables at startup; existing owner overrides are preserved. Old Phoenix price ranges and report links do not feed San Diego results. Approved recent quotes must belong to a San Diego check before they contribute.
 
-Install Node 24, then `corepack pnpm install`. Run `node --env-file=.env server/index.mjs` after copying `.env.example` to `.env`, or `node server/index.mjs` to start with local development defaults. Visit http://localhost:3000. Set `ADMIN_PASSWORD` to enable `/admin`. Run `node --test tests/*.test.mjs` for pricing and HTTP flow tests.
+Exact option/body-type ranges take priority. An unspecified ceramic-coating duration uses the broader coating/body-type range. Coverage-specific services do not inherit unrelated job scopes. Unresearched options are hidden, and direct attempts to price them are rejected before the gate. PPF, wraps, van categories, and other unsupported options stay hidden until researched ranges are added. Add verified ranges in Seed prices to make combinations available; the availability cache refreshes on updates.
 
-## Render
+Published rates are asking/starting prices, not completed customer transactions. Low/high are observed bounds of the documented sample and typical is its median. The app labels the result as a seed estimate and explains that product, preparation and coverage vary. Ten approved quotes within twelve months enable the existing trimmed percentile calculation. Broader fallback ranges are explicitly identified by `source: service-fallback`.
 
-The root `render.yaml` provisions a separate web service and Postgres database in Oregon. Start a Blueprint from this branch. The generated owner password and session secret are stored as Render environment variables; reveal `ADMIN_PASSWORD` in the service dashboard to sign in. Existing services are not adopted.
+## Run and test
 
-The Blueprint uses free resources for initial review. Render's free web services sleep on idle, and free Postgres expires after 30 days; upgrade before production/ad traffic. An always-on paid service is needed for consistent email queue processing and the fast first-load target. No load-time guarantee has been measured on real 4G.
+Install Node 24 and run `corepack pnpm install`. Copy `.env.example` to `.env`, then `node --env-file=.env server/index.mjs`. Alternatively run `node server/index.mjs` for local defaults at http://localhost:3000. Set `ADMIN_PASSWORD` to use `/admin`. Run `node --test tests/*.test.mjs` for server-flow and pricing tests.
 
-## Launch configuration
+## Production configuration
 
-Configure these variables in the **new** Render web service's Environment panel, then deploy:
+Set these in the Render web service Environment panel:
 
-| Integration | Environment variables |
+| Purpose | Variables |
 | --- | --- |
-| Public URL | `PUBLIC_URL` (your HTTPS Render or custom-domain URL) |
-| Spam protection | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` (add your hostname in Cloudflare) |
-| Reports and lead notifications | `RESEND_API_KEY`, `EMAIL_FROM` (verified domain), `ADMIN_EMAIL` |
-| Newsletter | `BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID` |
-| Meta | `META_PIXEL_ID`, `META_ACCESS_TOKEN`, `META_API_VERSION` (default v25.0; use a version supported by your app) |
+| Public report links | `PUBLIC_URL` (otherwise uses Render's external URL) |
+| Spam verification | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
+| Reports and shop notifications | `RESEND_API_KEY`, `EMAIL_FROM` (verified sender), `ADMIN_EMAIL` |
+| Weekly deals | `BEEHIIV_API_KEY`, `BEEHIIV_PUBLICATION_ID` |
+| Meta tracking | `META_PIXEL_ID`, `META_ACCESS_TOKEN`, `META_API_VERSION` |
 
-Create beehiiv custom fields `vehicle`, `service`, `verdict`, and `zip`. The app sends a service tag with each subscription. Confirm the API plan supports your segmentation configuration. Provider credentials are never sent to browsers.
+Create beehiiv fields `vehicle`, `service`, `verdict`, `zip`. ZIP is blank at signup and can be collected later with a quote request. Verify your publication and tracking assets target San Diego. Never commit credentials. Production submissions fail closed until Turnstile is configured. Missing mail credentials leave jobs pending, and the UI reports that state. After setting provider credentials, retry pending jobs from the admin Delivery queue and test delivery end to end.
 
-Production email and phone forms fail closed until Turnstile is configured. Missing mail/newsletter credentials leave jobs pending in the owner Delivery queue; the result page accurately says when report email is not configured. After supplying credentials, use Retry pending jobs. Provider jobs retry up to six times. Sending is at least once (Resend receives idempotency keys); inspect delivery status before manually retrying notifications.
+Private report links restore answers into the quote-request ZIP step and expire after 30 days. Keep those links private. Report emails use “Caesar from San Diego Car Care Deals.” Subscriber emails are omitted from shop notifications and lead exports.
 
-## Owner setup
-
-1. Add verified low/typical/high ranges per service option and vehicle type, with research sources. No invented prices are seeded.
-2. Review pending quotes. Outlier flags identify prices below one-third or above three times the typical price. Ten approved quotes from the last 12 months enable 20th/50th/80th percentile pricing after trimming extremes. Calculations run on the server at check time; reports retain that snapshot.
-3. Add partner shops, coverage and notification email. Mark a shop vetted only after checking it and confirming its permission to receive leads. Set deals active when valid. Quote requests remain unavailable without matching vetted shops; the visitor sees and consents to the named partners.
-4. Test Resend delivery, beehiiv subscription/segmentation, Cloudflare verification, Meta browser/server deduplication, and shop notifications using your configured accounts before ad traffic.
-5. Finalize the published business identity, support contact, privacy/terms wording, retention practices, and shop contact consent for your operation. Current legal pages are initial product copy. The privacy page explains partner sharing and lead sales.
-
-The owner dashboard supports seed prices, quote moderation, lead filters (service, ZIP, date, status), buyer/payment tracking, CSV export, shops/deals, campaign/day capture rates, and delivery retries. CSV cells are protected against spreadsheet formula injection.
-
-## Operational limits
-
-The queue drains in the web process every minute; use one web instance for this MVP. Move queue claims to a separate worker with database locking before scaling instances. Subscriber source retains the original campaign attribution; each check has its own campaign snapshot. Admin login expires after eight hours and uses an HttpOnly SameSite cookie. A process-local rate limiter protects forms; add a shared limiter before horizontal scaling. Local SQLite is for development only and is prohibited in production. Lookup failure permits manual vehicle entry. ZIP validation covers configured metro ZIP patterns rather than a postal-address verification service.
-
-Never commit `.env`, database files, API keys, passwords, contact exports, or test submissions. `.gitignore` excludes local runtime data. Source quote and subscriber records are private to the owner API. Rotate credentials in Render if exposed. Back up Postgres and establish a real retention/deletion process before collecting production leads.
+The email queue runs every minute within one web instance. Free Render web services sleep on idle, and free Postgres expires after 30 days. Upgrade before sustained ad traffic, establish database backups, and move queue claiming to a worker before scaling instances. Owner access uses an HttpOnly cookie; rate limiting is process-local. Confirm business/support details, retention practices and the contact-consent text before selling leads.
