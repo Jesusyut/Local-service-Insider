@@ -1,12 +1,13 @@
 import {createHash,randomUUID} from 'node:crypto';
 import {query} from './db.mjs';
 export const hash=v=>createHash('sha256').update(v.trim().toLowerCase()).digest('hex');
-export async function enqueue(kind,payload){await query('INSERT INTO outbox(id,kind,payload,status,created_at) VALUES($1,$2,$3,$4,$5)',[randomUUID(),kind,JSON.stringify(payload),'pending',new Date().toISOString()]);}
+export async function enqueue(kind,payload,id=randomUUID()){await query('INSERT INTO outbox(id,kind,payload,status,created_at) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING',[id,kind,JSON.stringify(payload),'pending',new Date().toISOString()]);return id;}
 async function post(url,key,body,id){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(key?{Authorization:`Bearer ${key}`} :{}),...(id?{'Idempotency-Key':id}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error(`Provider returned HTTP ${r.status}`);}
 export async function deliver(job){const p=JSON.parse(job.payload);
  if(job.kind==='report'||job.kind==='lead-email'){
   if(!process.env.RESEND_API_KEY||!process.env.EMAIL_FROM)throw new Error('Resend is not configured');
-  await post('https://api.resend.com/emails',process.env.RESEND_API_KEY,{from:process.env.EMAIL_FROM,to:[p.to],subject:p.subject,text:p.text},job.id);
+  const mailbox=process.env.EMAIL_FROM.match(/<([^>]+)>/)?.[1]||process.env.EMAIL_FROM;
+  await post('https://api.resend.com/emails',process.env.RESEND_API_KEY,{from:p.senderName?`${p.senderName} <${mailbox}>`:process.env.EMAIL_FROM,to:[p.to],subject:p.subject,text:p.text,...(p.html?{html:p.html}:{})},job.id);
  }else if(job.kind==='newsletter'){
   if(!process.env.BEEHIIV_API_KEY||!process.env.BEEHIIV_PUBLICATION_ID)throw new Error('beehiiv is not configured');
   await post(`https://api.beehiiv.com/v2/publications/${process.env.BEEHIIV_PUBLICATION_ID}/subscriptions`,process.env.BEEHIIV_API_KEY,p);

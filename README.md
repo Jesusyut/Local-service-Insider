@@ -1,5 +1,11 @@
 # Phoenix Car Care Price Checker
 
+Campaign copy from the November 10 campaign deck is applied to the landing page, `?angle=quote|cost|heat` headlines, three-step funnel, teaser, gate, result, quote request and report email. Choice-only screens advance on a tap. Footer navigation appears only after the email gate; legal links remain below the email/quote buttons. Every screen sends a named event, and the owner dashboard measures capture against landing visits.
+
+The email uses the requested sender name, preview, subject and body, with a return button that restores answers directly into the quote request. Return links carry a private random report token in the URL fragment, are removed from the address bar immediately, and expire after 30 days. Treat them as private access links. Per-service price factors can be edited under Seed prices.
+
+Truthful exceptions to campaign copy: missing price data keeps the existing no-data message; the email confirmation appears only after Resend accepts the send; quote success says the request is queued rather than promising a text already happened. Outside-area ZIPs can still receive reports but get no partner routing, and their quotes do not contribute to Phoenix ranges. Lead notifications and lead CSV exports omit subscriber emails. Routing requires consent to the named shops and is capped at three. The deck requests legal review of its contact-consent text before selling leads; that review has not been performed.
+
 A mobile-first Phoenix car-care price checker, built from the included development spec. Node 24 serves the frontend and API; Render Postgres stores production records. Local development uses Node's built-in SQLite. Price ranges never ship in the public catalog or teaser API.
 
 ## Run locally
