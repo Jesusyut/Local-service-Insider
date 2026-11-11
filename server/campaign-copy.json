@@ -40,17 +40,17 @@
   "teaser.line.low": "Your quote is below the usual range. That can be a great deal, or a sign of cheaper materials.",
   "teaser.line.noquote": "We have the local price range for your {year} {model}.",
   "teaser.blur": "$ ___ – $ ___",
-  "gate.headline": "Where do I send your full price report?",
+  "gate.headline": "Your price report is ready",
   "gate.bullets": [
-    "✓ The exact low, typical, and high price for your car",
+    "✓ Your exact low, typical, and high price",
     "✓ How much you'd save, or overpay",
-    "✓ This week's local car care deals"
+    "✓ Alerts when top-rated local {service} shops drop their prices or open up spots"
   ],
   "gate.name": "First name",
   "gate.email": "Email",
   "gate.zip": "Zip code",
   "gate.consent": "Send me the free weekly local car care deals email. Unsubscribe anytime.",
-  "gate.cta": "Show My Full Report",
+  "gate.cta": "Send My Report",
   "gate.privacy": "We never sell your email. No spam, no calls.",
   "gate.zip.error": "We only cover supported local areas right now. We'll still email your report.",
   "result.headline": "{first_name}, here's your local price report",
@@ -70,10 +70,12 @@
   "quotes.consent": "By tapping Get My Quotes, I agree that up to 3 local car care shops may contact me by call or text about my request, including by automated means. Consent isn't required to buy. Msg and data rates may apply.",
   "quotes.thanks": "Done. Expect a text from local shops soon. Your deals email arrives every week.",
   "deals.title": "This week's local deals",
-  "gate.disclosure": "You'll also get our free weekly local deals. Unsubscribe anytime.",
+  "gate.disclosure": "You'll also get price alerts and our weekly local deals. Unsubscribe anytime.",
   "angles": {
     "quote": "Is your tint or ceramic quote fair?",
     "cost": "What should your car really cost to coat, wrap, or protect?",
     "heat": "What should tint cost for your car locally?"
-  }
+  },
+  "gate.sub": "Where should we send it?",
+  "gate.unlock": "Unlock My Report"
 }
