@@ -1,24 +1,31 @@
+# New isolated preview resources. Upgrade the database before collecting real leads.
 services:
   - type: web
-    name: local-service-insider
-    runtime: static
-    buildCommand: ""
-    staticPublishPath: .
-    pullRequestPreviewsEnabled: false
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: SAMEORIGIN
-    routes:
-      - type: rewrite
-        source: /offer
-        destination: /offer.html
-      - type: rewrite
-        source: /pricing
-        destination: /pricing/index.html
-      - type: rewrite
-        source: /pricing/*
-        destination: /pricing/index.html
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    name: phoenix-car-care
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: corepack pnpm install --frozen-lockfile
+    startCommand: node server/index.mjs
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phoenix-car-care-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        generateValue: true
+databases:
+  - name: phoenix-car-care-db
+    plan: free
+    region: oregon
+    databaseName: phoenixcarcare
+    user: phoenixcarcare
+    ipAllowList: []
