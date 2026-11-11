@@ -77,5 +77,23 @@
     "heat": "What should tint cost for your car locally?"
   },
   "gate.sub": "Where should we send it?",
-  "gate.unlock": "Unlock My Report"
+  "gate.unlock": "Unlock My Report",
+  "pick.eyebrow": "FREE LOCAL SHOP PICK",
+  "pick.headline": "No time to shop around? We'll pick for you.",
+  "pick.sub": "Tell us your car and what you want done. We'll match you with a vetted local shop and show you what a fair price looks like.",
+  "pick.cta": "Get My Shop Pick",
+  "pick.gate.headline": "We're matching you with a local shop",
+  "pick.gate.sub": "Where should we send your pick?",
+  "pick.gate.bullets": [
+    "✓ A vetted local {service} shop that fits your car",
+    "✓ The fair price range, so you know what to expect",
+    "✓ What to ask for so you get the best result"
+  ],
+  "pick.gate.cta": "Send My Pick",
+  "pick.zip.q": "Where's the car parked most of the time?",
+  "pick.contact.headline": "Your local pick: {shop}",
+  "pick.contact.sub": "Want them to text you a quote? Add your number. You decide from there.",
+  "pick.contact.cta": "Text Me a Quote",
+  "pick.thanks": "Done. {shop} will text you a quote soon. Your weekly local deals email is on its way too.",
+  "pick.none": "We're still vetting shops for this service near you. Here's the fair price in the meantime."
 }
