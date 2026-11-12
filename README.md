@@ -1,5 +1,11 @@
 # Phoenix Car Care — photo-card quiz
 
+## Current new-request flow
+
+New requests on `/` and `/pick` start with a service photo card, then capture first name, email and phone before asking for year, make, model and a desired completion date. There are no package, vehicle-type or quote-entry screens in this flow. The final estimate aggregates the service's seeded package/body-type ranges and is explicitly labeled broad; it does not assume a vehicle class. Smog remains the fixed state-station OBD fee and requires a 1996+ vehicle. The desired date is not a booking.
+
+`/api/intake` saves contact details and the displayed disclosures immediately, emits a deduplicated Lead event, and never distributes phone details to shops. `/api/intake/estimate` saves vehicle/date details and queues the estimate email. The owner dashboard's Intake leads tab includes incomplete and completed requests. Production capture requires configured Turnstile keys. Existing report-return links and partner-consent endpoints remain compatible with prior reports.
+
 The current version uses the supplied November 10 campaign deck, with the user's explicit overrides: two-field email gate, newsletter disclosure below the button, ZIP at quote requests, no empty partner cards, and mobile headline sizing. `server/campaign-copy.json` is the copy inventory keyed by element ID. Landing headlines read `?angle=quote`, `?angle=cost`, or `?angle=heat` exactly from the deck; the longer variants use smaller type to fit two lines at 390px.
 
 Seven ordered services: Window tint, Mobile detailing, Ceramic coating, Body shop, Starlight headliner, Oil change, Custom lighting. The first two photos load eagerly; the remaining five are lazy. All seven files live under `public/images/`, are 600×450 WebP, and are approximately 20–41 KB each. The ceramic image was recovered from the deck's exact source URL because only six images were attached. There are no hotlinked image dependencies.

@@ -4,7 +4,7 @@ before(async()=>{dir=await mkdtemp(join(tmpdir(),'pick-test-'));proc=spawn(proce
 after(async()=>{proc?.kill();await new Promise(r=>setTimeout(r,300));await rm(dir,{recursive:true,force:true});});
 test('shop-pick landing page is served with its own copy',async()=>{
  const r=await fetch(base+'/pick');assert.equal(r.status,200);const html=await r.text();
- assert.match(html,/No time to shop around\? We'll pick for you\./);assert.match(html,/Get My Shop Pick/);assert.match(html,/\/app\.js/);
+ assert.match(html,/No time to shop around\? Start here\./);assert.match(html,/Get My Estimate/);assert.match(html,/\/app\.js/);
  const {copy}=await (await fetch(base+'/api/config')).json();
  for(const k of ['pick.gate.headline','pick.gate.cta','pick.contact.headline','pick.thanks','pick.none'])assert.ok(copy[k],k);
  assert.match(copy['pick.contact.headline'],/\{shop\}/);

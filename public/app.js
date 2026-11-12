@@ -83,7 +83,7 @@ async function loadModels(){const v=++lookupVersion;try{const data=await api(`/a
 async function init(){try{
  config=await api('/api/config');
  window.configureMetaPixel(config.metaPixelId);
- $('#start').onclick=()=>{track('CheckStarted');render();};
+ $('#start').onclick=async()=>{track('CheckStarted');try{const {startIntake}=await import('/intake.js');startIntake(config);}catch(e){app.insertAdjacentHTML('beforeend','<p class="error">'+esc(e.message)+'</p>');}};
  if(location.hash.startsWith('#request=')){const id=decodeURIComponent(location.hash.slice(9));history.replaceState(null,'',location.pathname+location.search);report=await api('/api/resume?id='+encodeURIComponent(id));checkId=id;Object.assign(state,report.vehicle,{firstName:report.firstName,email:report.email,zip:report.zip,noQuote:report.vehicle.amount===null,amount:report.vehicle.amount??'',service:report.vehicle.option.split(':')[0]});step=report.quoteRequestsAvailable?5:4;panel='zip';render();}
  void api('/api/events',{name:'ViewContent',campaign:state.source.utm_campaign}).then(e=>pixel('ViewContent',e.eventId)).catch(()=>{});
  }catch(e){app.insertAdjacentHTML('afterbegin','<p class="notice">'+esc(e.message||'The checker is temporarily unavailable. Please refresh in a moment.')+'</p>');}}

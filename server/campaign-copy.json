@@ -1,11 +1,11 @@
 {
   "land.eyebrow": "FREE LOCAL PRICE CHECK",
   "land.headline": "Is your car care quote fair?",
-  "land.sub": "Enter your car and your quote. In 30 seconds, see if it's low, fair, or high based on real local prices.",
+  "land.sub": "Choose a service, add your contact details, then tell us your car and desired date to see a local estimate.",
   "land.cta": "Check My Price",
   "land.trust1": "✓ Free, no calls",
   "land.trust2": "✓ Real local prices",
-  "land.trust3": "✓ Takes 30 seconds",
+  "land.trust3": "✓ 3 quick steps",
   "land.services": "Tint · Detailing · Ceramic coating · Body work · Starlight · Oil change · Smog check · Lighting",
   "step.progress": "Step {n} of 3",
   "veh.q": "What are you driving?",
@@ -81,9 +81,9 @@
   "gate.sub": "Where should we send it?",
   "gate.unlock": "Unlock My Report",
   "pick.eyebrow": "FREE LOCAL SHOP PICK",
-  "pick.headline": "No time to shop around? We'll pick for you.",
-  "pick.sub": "Tell us your car and what you want done. We'll match you with a vetted local shop and show you what a fair price looks like.",
-  "pick.cta": "Get My Shop Pick",
+  "pick.headline": "No time to shop around? Start here.",
+  "pick.sub": "Choose a service, add your contact details, then tell us your car and desired date to see a local estimate.",
+  "pick.cta": "Get My Estimate",
   "pick.gate.headline": "We're matching you with a local shop",
   "pick.gate.sub": "Where should we send your pick?",
   "pick.gate.bullets": [
@@ -99,5 +99,13 @@
   "pick.thanks": "Done. {shop} will text you a quote soon. Your weekly local deals email is on its way too.",
   "pick.none": "We're still vetting shops for this service near you. Here's the fair price in the meantime.",
   "result.smog.over": "Emissions tests at state test stations cost one set state fee. A higher quote is a shop markup, so you can test at a state station instead.",
-  "result.smog.fair": "Emissions tests at state test stations cost one set state fee, so there is nothing to negotiate."
+  "result.smog.fair": "Emissions tests at state test stations cost one set state fee, so there is nothing to negotiate.",
+  "intake.contact.headline": "Where should we send your estimate?",
+  "intake.contact.cta": "Continue",
+  "intake.contact.disclosure": "We'll use your number to follow up about this request. We won't share it with shops unless you ask.",
+  "intake.date.label": "Desired completion date",
+  "intake.date.notice": "This is your requested date, not a confirmed booking.",
+  "intake.estimate.cta": "See My Estimate",
+  "intake.estimate.headline": "Your local service estimate",
+  "intake.estimate.note": "This is a broad estimate across available service packages and vehicle sizes. Your final quote depends on the work and your car."
 }
