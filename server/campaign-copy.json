@@ -31,7 +31,7 @@
   "svc.card.coat": "Ceramic coating",
   "svc.card.body": "Body shop",
   "svc.card.starlight": "Starlight headliner",
-  "svc.card.oil": "Oil change",
+  "svc.card.oil": "Mechanical work",
   "svc.card.smog": "Smog check",
   "svc.card.lighting": "Custom lighting",
   "teaser.badge.high": "HIGH",
@@ -107,5 +107,6 @@
   "intake.date.notice": "This is your requested date, not a confirmed booking.",
   "intake.estimate.cta": "See My Estimate",
   "intake.estimate.headline": "Your local service estimate",
-  "intake.estimate.note": "This is a broad estimate across available service packages and vehicle sizes. Your final quote depends on the work and your car."
+  "intake.estimate.note": "This is a broad estimate across available service packages and vehicle sizes. Your final quote depends on the work and your car.",
+  "pick.quote.consent": "By tapping Send to the shop, I agree that Local Car Care and the shop it picks for me may call or text me about this request, including by automated means. Consent isn't required to buy. Msg and data rates may apply."
 }

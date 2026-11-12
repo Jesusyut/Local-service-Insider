@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {services,types,copy} from '../server/catalog.mjs';import {seedRanges,seedFallbacks} from '../server/seeds.mjs';import {readFileSync,statSync} from 'node:fs';
 test('eight ordered photo services match the deck, and all options have positive exact or service-fallback seeds',()=>{
- assert.deepEqual(services.map(s=>s.name),['Window tint','Mobile detailing','Ceramic coating','Body shop','Starlight headliner','Oil change','Smog check','Custom lighting']);
+ assert.deepEqual(services.map(s=>s.name),['Window tint','Mobile detailing','Ceramic coating','Body shop','Starlight headliner','Mechanical work','Smog check','Custom lighting']);
  for(const s of services){assert.equal(s.name,copy['svc.card.'+s.copyId]);assert.equal(s.question,copy['svc.opt.'+s.copyId]);for(const [option]of s.options)for(const type of types){const r=seedRanges.find(r=>r.option===s.id+':'+option&&r.type===type)||seedFallbacks.find(r=>r.service===s.id&&r.type===type);assert.ok(r,`${s.id}:${option}/${type}`);assert.ok(r.low>0&&r.low<=r.typical&&r.typical<=r.high);}}
  assert.equal(copy['gate.disclosure'],"You'll also get price alerts and our weekly local deals. Unsubscribe anytime.");
 });

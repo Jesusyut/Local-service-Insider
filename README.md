@@ -10,6 +10,12 @@ The current version uses the supplied November 10 campaign deck, with the user's
 
 Seven ordered services: Window tint, Mobile detailing, Ceramic coating, Body shop, Starlight headliner, Oil change, Custom lighting. The first two photos load eagerly; the remaining five are lazy. All seven files live under `public/images/`, are 600×450 WebP, and are approximately 20–41 KB each. The ceramic image was recovered from the deck's exact source URL because only six images were attached. There are no hotlinked image dependencies.
 
+## /pick (Local Car Care)
+
+`/pick` is its own page (`public/pick.html`, `pick.css`, `pick.js`) and no longer loads `app.js`. Flow: landing → step 1, pick a service (the two landing photos are clickable and jump straight to step 2 with that service chosen) → step 2, first name, email and mobile number, one field per screen → the local price label (`POST /api/intake/rate`, broad range across packages and body types, emailed to the visitor) → **Text me a quote** → year, make, model, a day in the next six days, a time of day and contact consent (`POST /api/intake/quote`). Quote requests are stored in `intake_quote_requests`, fire a deduplicated `QuoteRequest` event, and email `ADMIN_EMAIL` when it is set. The owner dashboard's Intake leads tab shows the requested time and "Quote requested".
+
+Landing headline angles: `?angle=trust` (default), `convenience`, `quality`, `onestop`. Barlow fonts are self-hosted under `public/fonts/` (SIL OFL, see `OFL.txt`) because the CSP allows only same-origin styles and fonts. The Google rating badge is `public/images/google-stars.png`; keep the "5-star shops only" claim true for every shop you route to.
+
 ## Pricing
 
 See [PRICING-SOURCES.md](PRICING-SOURCES.md). There are 120 supported service-option/body-type combinations. Exact research seed ranges take priority, then the service/body-type fallback. Published asking/starting prices and composite package calculations are estimates, not a survey of transactions. See each stored `source_note` for scope limitations. In particular headlight upgrades use a broader local custom-lighting range, and coating one-year/unspecified durations use the broader coating service range. Body-work estimates are broad because severity and replacement parts are unknown.
