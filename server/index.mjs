@@ -62,10 +62,10 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/healthz'){await query('SELECT 1');return json(res,{ok:true});}
  if(process.env.MAINTENANCE_MODE==='true'){res.setHeader('Retry-After','120');return json(res,{error:'We are updating the price checker. Please try again shortly.'},503);}
  if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
- if(path==='/api/intake'&&req.method==='POST'){rate(req,'intake',15);return json(res,await captureIntake(await body(req),{turnstile}));}
- if(path==='/api/intake/rate'&&req.method==='POST'){rate(req,'intake-rate',30);return json(res,await rateIntake(await body(req),{rangeFor}));}
- if(path==='/api/intake/quote'&&req.method==='POST'){rate(req,'intake-quote',10);return json(res,await requestQuote(await body(req),{turnstile}));}
- if(path==='/api/intake/estimate'&&req.method==='POST'){rate(req,'intake-estimate',30);return json(res,await completeIntake(await body(req),{rangeFor}));}
+ if(path==='/api/intake'&&req.method==='POST'){rate(req,'intake',15);const result=await captureIntake(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
+ if(path==='/api/intake/rate'&&req.method==='POST'){rate(req,'intake-rate',30);const result=await rateIntake(await body(req),{rangeFor});void drain().catch(()=>{});return json(res,result);}
+ if(path==='/api/intake/quote'&&req.method==='POST'){rate(req,'intake-quote',10);const result=await requestQuote(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
+ if(path==='/api/intake/estimate'&&req.method==='POST'){rate(req,'intake-estimate',30);const result=await completeIntake(await body(req),{rangeFor});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/resume'&&req.method==='GET'){rate(req,'resume',40);res.setHeader('Referrer-Policy','no-referrer');return json(res,await resume(url.searchParams.get('id')));}
  if(path==='/api/delivery'&&req.method==='GET'){rate(req,'delivery',100);const c=await checkRecord(url.searchParams.get('id'));if(!c.subscriber_id)fail('Not found',404);return json(res,{emailStatus:await emailStatus(c.id)});}
  if(path==='/api/vehicles'){rate(req,'vehicles',100);const make=text(url.searchParams.get('make')),year=Number(url.searchParams.get('year'));if(make){if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+1)fail('Invalid year');return json(res,(await vehicleData(`GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`)).map(r=>r.Model_Name).sort());}return json(res,(await vehicleData('GetMakesForVehicleType/car?format=json')).map(r=>r.MakeName).sort());}
