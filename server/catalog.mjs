@@ -8,6 +8,7 @@ export const services=[
  {id:'body',name:copy['svc.card.body'],image:'/images/body.webp',copyId:'body',question:copy['svc.opt.body'],options:[['dent','Dent or scratch'],['bumper','Bumper'],['collision','Collision damage'],['paint','Full paint']]},
  {id:'starlight',name:copy['svc.card.starlight'],image:'/images/starlight.webp',copyId:'starlight',question:copy['svc.opt.starlight'],options:[['standard','Standard stars'],['dense','Dense stars'],['shooting','With shooting stars']]},
  {id:'oil',name:copy['svc.card.oil'],image:'/images/oil.webp',copyId:'oil',question:copy['svc.opt.oil'],options:[['conventional','Conventional'],['blend','Synthetic blend'],['synthetic','Full synthetic'],['unsure','Not sure']]},
+ {id:'smog',name:copy['svc.card.smog'],image:'/images/smog.webp',copyId:'smog',question:copy['svc.opt.smog'],options:[['obd','1996 or newer']]},
  {id:'lighting',name:copy['svc.card.lighting'],image:'/images/lighting.webp',copyId:'lighting',question:copy['svc.opt.lighting'],options:[['ambient','Interior ambient'],['headlight','Headlight upgrade'],['exterior','Exterior accents']]}
 ];
 export const options=services.flatMap(s=>s.options.map(([id,name])=>({id:`${s.id}:${id}`,name,service:s.name,serviceId:s.id})));

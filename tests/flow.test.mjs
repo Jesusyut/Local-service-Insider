@@ -4,8 +4,17 @@ async function api(path,body,auth=false){const r=await fetch(base+path,{method:b
 before(async()=>{dir=await mkdtemp(join(tmpdir(),'sd-test-'));proc=spawn(process.execPath,['server/index.mjs'],{env:{...process.env,NODE_ENV:'test',DATABASE_URL:'',PORT:'3199',ADMIN_PASSWORD:'test-owner-password',RESEND_API_KEY:'',EMAIL_FROM:'',BEEHIIV_API_KEY:'',META_PIXEL_ID:'123456789',META_ACCESS_TOKEN:'',TURNSTILE_SECRET_KEY:'',SQLITE_PATH:join(dir,'test.db')},stdio:['ignore','pipe','pipe']});let logs='';proc.stdout.on('data',d=>logs+=d);proc.stderr.on('data',d=>logs+=d);for(let i=0;i<60;i++){try{if((await fetch(base+'/healthz')).ok)return;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error(logs);});
 after(async()=>{proc?.kill();await new Promise(r=>setTimeout(r,300));await rm(dir,{recursive:true,force:true});});
 const vehicle={year:2024,make:'Toyota',model:'Camry',vehicleType:'sedan',option:'tint:all',amount:500};
+test('smog check uses the fixed OBD fee and rejects pre-1996 vehicles',async()=>{
+ const smog={...vehicle,option:'smog:obd',amount:40};
+ assert.equal((await api('/api/check',{...smog,year:1995})).r.status,400);
+ const high=await api('/api/check',smog);assert.equal(high.r.status,200);assert.equal(high.data.verdict,'High');assert.match(high.data.explanation,/state fee.*shop markup/);
+ const fair=await api('/api/check',{...smog,amount:16.15});assert.equal(fair.data.verdict,'Fair');
+ const result=await api('/api/report',{id:high.data.id,firstName:'Smog',email:'smog@example.test',disclosureVersion:'weekly-deals-alerts-v5-local'});
+ assert.equal(result.r.status,200);assert.equal(result.data.range.low,16.15);assert.equal(result.data.range.typical,16.15);assert.equal(result.data.range.high,16.15);assert.equal(result.data.explanation,high.data.explanation);
+ assert.equal((await fetch(base+'/images/smog.webp')).headers.get('content-type'),'image/webp');
+});
 test('only seeded services are advertised; private pricing and service fallback work',async()=>{
- const {data:c}=await api('/api/config');assert.equal(c.services.length,7);assert.equal(Object.values(c.availability).reduce((n,a)=>n+a.length,0),120);assert.ok(c.services.some(s=>s.id==='coating'));assert.ok(!c.services.some(s=>['ppf','wrap'].includes(s.id)));assert.ok(c.types.includes('van'));assert.equal(c.ranges,undefined);
+ const {data:c}=await api('/api/config');assert.equal(c.services.length,8);assert.equal(Object.values(c.availability).reduce((n,a)=>n+a.length,0),125);assert.ok(c.services.some(s=>s.id==='coating'));assert.ok(!c.services.some(s=>['ppf','wrap'].includes(s.id)));assert.ok(c.types.includes('van'));assert.equal(c.ranges,undefined);
  const check=await api('/api/check',vehicle);assert.equal(check.r.status,200);assert.equal(check.data.range,undefined);assert.notEqual(check.data.verdict,'No data');reportId=check.data.id;
  assert.equal((await api('/api/check',{...vehicle,option:'ppf:body'})).r.status,400);
  const fallback=(await api('/api/check',{...vehicle,option:'coating:unsure',noQuote:true})).data;assert.notEqual(fallback.verdict,'No data');
