@@ -3,7 +3,7 @@ services:
   - type: web
     name: phoenix-car-care
     runtime: node
-    plan: free
+    plan: 0.5c-512mb
     region: oregon
     buildCommand: corepack pnpm install --frozen-lockfile
     startCommand: node server/index.mjs
