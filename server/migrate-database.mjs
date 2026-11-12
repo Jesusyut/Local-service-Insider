@@ -22,7 +22,12 @@ export async function migrateDatabase(){
    await admin.query(`CREATE ROLE local_price_check LOGIN PASSWORD '${password}'`);
   }
   const existing=await admin.query('SELECT pg_get_userbyid(datdba) AS owner FROM pg_database WHERE datname=$1',['local_price_check']);
-  if(!existing.rowCount)await admin.query('CREATE DATABASE local_price_check OWNER local_price_check');
+  if(!existing.rowCount){
+   const administrator=(await admin.query('SELECT current_user AS name')).rows[0].name;
+   await admin.query('GRANT local_price_check TO '+quote(administrator)+' WITH INHERIT FALSE, SET TRUE');
+   try{await admin.query('CREATE DATABASE local_price_check OWNER local_price_check');}
+   finally{await admin.query('REVOKE local_price_check FROM '+quote(administrator));}
+  }
   else if(existing.rows[0].owner!=='local_price_check')throw Error('Target database has an unexpected owner');
   await target.connect();
   const marker=await target.query("SELECT to_regclass('public._database_migration') AS marker");
