@@ -1,4 +1,4 @@
-# New isolated preview resources. Upgrade the database before collecting real leads.
+# The live database connection is managed in Render; preserve it on Blueprint sync.
 services:
   - type: web
     name: phoenix-car-care
@@ -15,9 +15,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: phoenix-car-care-db
-          property: connectionString
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: ADMIN_PASSWORD

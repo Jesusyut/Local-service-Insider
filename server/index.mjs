@@ -57,6 +57,7 @@ const server=http.createServer(async(req,res)=>{try{
  const url=new URL(req.url,'http://localhost'),path=url.pathname;
  if(!['GET','HEAD'].includes(req.method)){const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`&&origin!==process.env.PUBLIC_URL)fail('Invalid request origin',403);}
  if(path==='/healthz'){await query('SELECT 1');return json(res,{ok:true});}
+ if(process.env.MAINTENANCE_MODE==='true'){res.setHeader('Retry-After','120');return json(res,{error:'We are updating the price checker. Please try again shortly.'},503);}
  if(path==='/api/config')return json(res,{...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:process.env.TURNSTILE_SITE_KEY||'',metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
  if(path==='/api/resume'&&req.method==='GET'){rate(req,'resume',40);res.setHeader('Referrer-Policy','no-referrer');return json(res,await resume(url.searchParams.get('id')));}
  if(path==='/api/delivery'&&req.method==='GET'){rate(req,'delivery',100);const c=await checkRecord(url.searchParams.get('id'));if(!c.subscriber_id)fail('Not found',404);return json(res,{emailStatus:await emailStatus(c.id)});}
@@ -96,5 +97,5 @@ const server=http.createServer(async(req,res)=>{try{
  const files={'/':'index.html','/pick':'pick.html','/app.js':'app.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){if(!e.status)console.error('Request failed:',e.code||e.name);json(res,{error:e.status?e.message:'Something went wrong. Please try again.'},e.status||500);}});
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Phoenix Car Care ready at http://localhost:${process.env.PORT||3000}`));
-setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();
+if(process.env.MAINTENANCE_MODE!=='true')setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();
 process.on('SIGTERM',()=>server.close(()=>process.exit(0)));

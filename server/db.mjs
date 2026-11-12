@@ -1,6 +1,8 @@
 import {mkdirSync,readFileSync} from 'node:fs';
 import {options} from './catalog.mjs';
 import {loadSeeds} from './seeds.mjs';
+import {migrateDatabase} from './migrate-database.mjs';
+await migrateDatabase();
 let pool,sqlite;
 if(process.env.DATABASE_URL){const {default:pg}=await import('pg');pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:10});}
 else {if(process.env.NODE_ENV==='production')throw new Error('DATABASE_URL is required in production');mkdirSync('data',{recursive:true});const {DatabaseSync}=await import('node:sqlite');sqlite=new DatabaseSync(process.env.SQLITE_PATH||'data/local.db');sqlite.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;');}
