@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {createSpamCheck} from './spam-check.mjs';
 import {captureIntake,completeIntake,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -21,7 +22,8 @@ function json(res,data,status=200,headers={}){res.writeHead(status,{'Content-Typ
 async function body(req){let s='';for await(const part of req){s+=part;if(s.length>20000)fail('Request too large',413);}try{return JSON.parse(s||'{}');}catch{fail('Invalid JSON');}}
 const limits=new Map();
 function rate(req,scope,max=30){const ip=(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',').pop().trim();const key=scope+ip;let record=limits.get(key);if(!record||record.until<Date.now())record={count:0,until:Date.now()+600000};record.count++;limits.set(key,record);if(record.count>max)fail('Please wait a few minutes before trying again.',429);if(limits.size>10000)for(const [k,v]of limits)if(v.until<Date.now())limits.delete(k);}
-async function turnstile(token){if(!process.env.TURNSTILE_SECRET_KEY){if(production)fail('The spam check is not configured yet. Please try again later.',503);return;}const r=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',body:new URLSearchParams({secret:process.env.TURNSTILE_SECRET_KEY,response:token||''}),signal:AbortSignal.timeout(10000)});if(!(await r.json()).success)fail('Please complete the spam check again.');}
+const spamCheck=createSpamCheck({siteKey:process.env.TURNSTILE_SITE_KEY,secretKey:process.env.TURNSTILE_SECRET_KEY});
+const turnstile=token=>spamCheck.verify(token);
 function validateCheck(b){const year=Number(b.year),amount=b.noQuote?null:Number(b.amount);if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+1)fail('Choose a valid vehicle year.');if(!text(b.make)||!text(b.model)||!types.includes(b.vehicleType)||!options.some(o=>o.id===b.option))fail('Complete your vehicle and service details.');if(b.option==='smog:obd'&&year<1996)fail('This emissions test is for 1996 or newer vehicles.');if(amount!==null&&(!Number.isFinite(amount)||amount<=0||amount>100000))fail('Enter a quote between $1 and $100,000.');return {market,year,make:text(b.make),model:text(b.model),vehicleType:b.vehicleType,option:b.option,amount,shopName:text(b.shopName),source:Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'].map(k=>[k,text(b.source?.[k],200)]))};}
 async function rangeFor(option,type){
  const cutoff=new Date();cutoff.setFullYear(cutoff.getFullYear()-1);
@@ -59,7 +61,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(!['GET','HEAD'].includes(req.method)){const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`&&origin!==process.env.PUBLIC_URL)fail('Invalid request origin',403);}
  if(path==='/healthz'){await query('SELECT 1');return json(res,{ok:true});}
  if(process.env.MAINTENANCE_MODE==='true'){res.setHeader('Retry-After','120');return json(res,{error:'We are updating the price checker. Please try again shortly.'},503);}
- if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:process.env.TURNSTILE_SITE_KEY||'',metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
+ if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
  if(path==='/api/intake'&&req.method==='POST'){rate(req,'intake',15);return json(res,await captureIntake(await body(req),{turnstile}));}
  if(path==='/api/intake/estimate'&&req.method==='POST'){rate(req,'intake-estimate',30);return json(res,await completeIntake(await body(req),{rangeFor}));}
  if(path==='/api/resume'&&req.method==='GET'){rate(req,'resume',40);res.setHeader('Referrer-Policy','no-referrer');return json(res,await resume(url.searchParams.get('id')));}

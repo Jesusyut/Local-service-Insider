@@ -24,3 +24,5 @@ test('every service completes without package or vehicle-type questions; date an
 test('owner dashboard exposes early leads only after authentication',async()=>{
  assert.equal((await api('/api/admin/data')).status,401);const login=await api('/api/admin/login',{password:'test-owner'});const response=await fetch(base+'/api/admin/data',{headers:{Cookie:login.r.headers.get('set-cookie').split(';')[0]}});const data=await response.json();assert.equal(response.status,200);assert.equal(data.intakes.length,9);assert.ok(data.intakes.some(i=>!i.report&&i.phone==='6195550100'));assert.ok(data.intakes.some(i=>i.model==='Civic'&&i.desired_date===config.localToday));
 });
+
+test('submission rate limits still reject repeated attempts',async()=>{let limited=false;for(let i=0;i<16;i++){const response=await api('/api/intake',{...contact('oil'),phone:'invalid'});if(response.status===429){limited=true;break;}assert.equal(response.status,400);}assert.equal(limited,true);});
