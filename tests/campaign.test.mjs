@@ -8,6 +8,6 @@ test('all service images are local compressed WebP assets',()=>{
  for(const s of services){const p=new URL('../public'+s.image,import.meta.url);const bytes=readFileSync(p);assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');assert.ok(statSync(p).size<60000);}
 });
 test('visitor copy, results, CTAs and report templates use local branding',()=>{
- for(const path of ['public/index.html','public/app.js','public/admin.html','public/privacy.html','public/terms.html','server/campaign-copy.json','server/report-copy.mjs'])assert.doesNotMatch(readFileSync(new URL('../'+path,import.meta.url),'utf8'),/phoenix|valley/i,path);
+ for(const path of ['public/index.html','public/price-check.html','public/home.js','public/app.js','public/admin.html','public/privacy.html','public/terms.html','server/campaign-copy.json','server/report-copy.mjs'])assert.doesNotMatch(readFileSync(new URL('../'+path,import.meta.url),'utf8'),/phoenix|valley/i,path);
  assert.equal(copy['result.headline'],"{first_name}, here's your local price report");assert.match(copy['cta.quotes.sub'],/vetted local shops/);
 });

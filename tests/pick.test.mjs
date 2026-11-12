@@ -2,10 +2,12 @@ import test,{before,after} from 'node:test';import assert from 'node:assert/stri
 let proc,dir;const base='http://127.0.0.1:3198';
 before(async()=>{dir=await mkdtemp(join(tmpdir(),'pick-test-'));proc=spawn(process.execPath,['server/index.mjs'],{env:{...process.env,NODE_ENV:'test',DATABASE_URL:'',PORT:'3198',ADMIN_PASSWORD:'x',RESEND_API_KEY:'',EMAIL_FROM:'',BEEHIIV_API_KEY:'',META_PIXEL_ID:'',META_ACCESS_TOKEN:'',TURNSTILE_SECRET_KEY:'',SQLITE_PATH:join(dir,'t.db')},stdio:'ignore'});for(let i=0;i<60;i++){try{if((await fetch(base+'/healthz')).ok)return;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('server did not start');});
 after(async()=>{proc?.kill();await new Promise(r=>setTimeout(r,300));await rm(dir,{recursive:true,force:true});});
-test('shop-pick landing page is served with its own copy',async()=>{
- const r=await fetch(base+'/pick');assert.equal(r.status,200);const html=await r.text();
- assert.match(html,/Car care pros you can trust\./);assert.match(html,/Get my local price check/);assert.match(html,/\/pick\.js/);assert.match(html,/google-stars\.png/);
- for(const asset of ['/pick.js','/pick.css','/images/google-stars.png','/fonts/barlow-latin-400-normal.woff2','/fonts/barlow-semi-condensed-latin-700-normal.woff2'])assert.equal((await fetch(base+asset)).status,200,asset);
+test('home page is the Local Car Care landing; /pick redirects home and the old checker lives at /price-check',async()=>{
+ const moved=await fetch(base+'/pick?angle=quality',{redirect:'manual'});assert.equal(moved.status,301);assert.equal(moved.headers.get('location'),'/?angle=quality');
+ const old=await fetch(base+'/price-check');assert.equal(old.status,200);assert.match(await old.text(),/\/app\.js/);
+ const r=await fetch(base+'/');assert.equal(r.status,200);const html=await r.text();
+ assert.match(html,/Car care pros you can trust\./);assert.match(html,/Get my local price check/);assert.match(html,/\/home\.js/);assert.match(html,/google-stars\.png/);
+ for(const asset of ['/home.js','/home.css','/images/google-stars.png','/fonts/barlow-latin-400-normal.woff2','/fonts/barlow-semi-condensed-latin-700-normal.woff2'])assert.equal((await fetch(base+asset)).status,200,asset);
  const {copy}=await (await fetch(base+'/api/config')).json();
  for(const k of ['pick.gate.headline','pick.gate.cta','pick.contact.headline','pick.thanks','pick.none'])assert.ok(copy[k],k);
  assert.match(copy['pick.contact.headline'],/\{shop\}/);

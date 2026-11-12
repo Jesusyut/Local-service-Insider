@@ -1,4 +1,4 @@
-// /pick — Local Car Care. Two steps (service, then contact one field at a time) before the local rate.
+// / (home) — Local Car Care. Two steps (service, then contact one field at a time) before the local rate.
 // Vehicle, day and time are asked only after the visitor taps "Text me a quote".
 const $=s=>document.querySelector(s),app=$('#app'),params=new URLSearchParams(location.search);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -163,6 +163,8 @@ function renderDone(){
 }
 
 async function init(){
+ // Report emails from the older price checker link to /#request=; that flow now lives at /price-check.
+ if(location.hash.startsWith('#request=')){location.replace('/price-check'+location.search+location.hash);return;}
  applyAngle();
  try{
   config=await api('/api/config');

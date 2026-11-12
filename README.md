@@ -2,7 +2,7 @@
 
 ## Current new-request flow
 
-New requests on `/` and `/pick` start with a service photo card, then capture first name, email and phone before asking for year, make, model and a desired completion date. There are no package, vehicle-type or quote-entry screens in this flow. The final estimate aggregates the service's seeded package/body-type ranges and is explicitly labeled broad; it does not assume a vehicle class. Smog remains the fixed state-station OBD fee and requires a 1996+ vehicle. The desired date is not a booking.
+New requests on `/price-check` start with a service photo card, then capture first name, email and phone before asking for year, make, model and a desired completion date. There are no package, vehicle-type or quote-entry screens in this flow. The final estimate aggregates the service's seeded package/body-type ranges and is explicitly labeled broad; it does not assume a vehicle class. Smog remains the fixed state-station OBD fee and requires a 1996+ vehicle. The desired date is not a booking.
 
 `/api/intake` saves contact details and the displayed disclosures immediately, emits a deduplicated Lead event, and never distributes phone details to shops. `/api/intake/estimate` saves vehicle/date details and queues the estimate email. The owner dashboard's Intake leads tab includes incomplete and completed requests. Turnstile is optional: set both TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY to enable it. Without both, form validation and submission rate limits remain active. Existing report-return links and partner-consent endpoints remain compatible with prior reports.
 
@@ -10,11 +10,15 @@ The current version uses the supplied November 10 campaign deck, with the user's
 
 Seven ordered services: Window tint, Mobile detailing, Ceramic coating, Body shop, Starlight headliner, Oil change, Custom lighting. The first two photos load eagerly; the remaining five are lazy. All seven files live under `public/images/`, are 600×450 WebP, and are approximately 20–41 KB each. The ceramic image was recovered from the deck's exact source URL because only six images were attached. There are no hotlinked image dependencies.
 
-## /pick (Local Car Care)
+## Home page: Local Car Care
 
-`/pick` is its own page (`public/pick.html`, `pick.css`, `pick.js`) and no longer loads `app.js`. Flow: landing → step 1, pick a service (the two landing photos are clickable and jump straight to step 2 with that service chosen) → step 2, first name, email and mobile number, one field per screen → the local price label (`POST /api/intake/rate`, broad range across packages and body types, emailed to the visitor) → **Text me a quote** → year, make, model, a day in the next six days, a time of day and contact consent (`POST /api/intake/quote`). Quote requests are stored in `intake_quote_requests`, fire a deduplicated `QuoteRequest` event, and email `ADMIN_EMAIL` when it is set. The owner dashboard's Intake leads tab shows the requested time and "Quote requested".
+`/` is the Local Car Care page (`public/index.html`, `home.css`, `home.js`). `/pick` is retired and 301-redirects to `/` with its query string, so existing ad links keep their `?angle=` and UTM values. The earlier price checker (photo-card quiz below) moved to `/price-check`; old report-email links (`/#request=…`) are forwarded there, and new report emails link to `/price-check#request=…` directly.
 
-Landing headline angles: `?angle=trust` (default), `convenience`, `quality`, `onestop`. Barlow fonts are self-hosted under `public/fonts/` (SIL OFL, see `OFL.txt`) because the CSP allows only same-origin styles and fonts. The Google rating badge is `public/images/google-stars.png`; keep the "5-star shops only" claim true for every shop you route to.
+Flow: landing, then step 1, pick a service (the two landing photos are clickable and jump straight to step 2 with that service chosen), then step 2, first name, email and mobile number, one field per screen, then the local price label (`POST /api/intake/rate`, a broad range across packages and body types, emailed to the visitor), then **Text me a quote**: year, make, model, a day in the next six days, a time of day and contact consent (`POST /api/intake/quote`). Quote requests are stored in `intake_quote_requests`, fire a deduplicated `QuoteRequest` event, and email `ADMIN_EMAIL` when it is set. The owner dashboard's Intake leads tab shows the requested time and "Quote requested".
+
+Landing headline angles: `?angle=trust` (default), `convenience`, `quality`, `onestop`. Barlow fonts are self-hosted under `public/fonts/` (SIL OFL, see `OFL.txt`) because the CSP allows only same-origin styles and fonts. The Google rating badge is `public/images/google-stars.png`; keep the 5-star claim true for every shop you route to.
+
+## Price checker at /price-check
 
 ## Pricing
 
