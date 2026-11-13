@@ -4,6 +4,7 @@ import {pool} from './db.js';
 import {leads} from './routes/leads.js';
 import {booking} from './routes/booking.js';
 import {sms} from './routes/sms.js';
+import {partner} from './routes/partner.js';
 import {tick,deliver} from './services/scheduler.js';
 import {timingSafeEqual} from 'node:crypto';
 export function createApp(){const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
@@ -14,6 +15,9 @@ export function createApp(){const app=express();app.disable('x-powered-by');app.
  app.use('/api/leads',leads);
  app.use('/api/booking',booking);
  app.use('/api/sms',sms);
+ app.use('/api/partner',partner);
+ app.use('/assets',express.static(fileURLToPath(new URL('../public/',import.meta.url))));
+ app.get('/partner',(req,res)=>res.sendFile(fileURLToPath(new URL('../public/partner.html',import.meta.url))));
  app.post('/api/internal/tick',async(req,res)=>{const expected='Bearer '+process.env.TICK_SECRET,a=Buffer.from(req.get('authorization')||''),b=Buffer.from(expected);if(!process.env.TICK_SECRET||a.length!==b.length||!timingSafeEqual(a,b))return res.sendStatus(401);res.json({ok:true,delivered:await tick()});});
  app.use((err,req,res,next)=>{if(!err.status)console.error('Request failed:',err.code||err.name);res.status(err.status||500).json({error:err.status?err.message:'Something went wrong, try again'});});return app;
 }
