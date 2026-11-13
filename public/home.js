@@ -7,9 +7,12 @@ const angles={
  trust:{h:'Car care pros you can trust.',sub:'Get quotes from hand-picked, highly rated local shops. One request, and no calling around.',points:['Every shop is checked by us before it’s listed','See the fair local price before anyone texts you','No obligation. You decide.']},
  convenience:{h:'Skip the calling around.',sub:'Tell us what your car needs. A highly rated local shop texts you a price and a time that works for you.',points:['Two quick steps, about a minute','A real price by text, not phone tag','Pick a time that fits your week']},
  quality:{h:'Good work at a fair price.',sub:'Know what local shops actually charge, then get a quote only from shops that do it right.',points:['The low, typical and high local price','Quotes only from highly rated shops','No pressure, no upsell calls']},
+ ceramic:{h:'Keep that new-car shine for years.',sub:'Tell us your car. We match you with a top-rated local ceramic coating shop and show you the fair price first.',points:['Ceramic packages run about $700 to $2,000 locally','Only highly rated shops we’ve checked out ourselves','No calling around. You decide.']},
  onestop:{h:'One stop for everything your car needs.',sub:'Tint, detailing, ceramic, smog, mechanical work and more, from local shops we’ve checked out ourselves.',points:['One request covers any service','Highly rated shops near you','Your quote by text, your time']}
 };
 const angle=angles[params.get('angle')]?params.get('angle'):'trust';
+// ?service=<id> from an ad skips the service picker and goes straight to contact.
+const presetService=params.get('service')||'';
 
 let config,step='landing',slide=0,id,report,token='',challengeId,modelRequest=0;
 const requestId=crypto.randomUUID();
@@ -173,7 +176,7 @@ async function init(){
   config=await api('/api/config');
   window.configureMetaPixel?.(config.metaPixelId);
   void api('/api/events',{name:'ViewContent',campaign:state.source.utm_campaign}).then(e=>pixel('ViewContent',e.eventId)).catch(()=>{});
-  $('#start').onclick=()=>{void track('CheckStarted');step='service';render();};
+  $('#start').onclick=()=>{void track('CheckStarted');if(config.services.some(s=>s.id===presetService))return choose(presetService);step='service';render();};
   document.querySelectorAll('#landing [data-service]').forEach(b=>b.onclick=()=>{void track('CheckStarted');choose(b.dataset.service);});
  }catch(e){app.insertAdjacentHTML('afterbegin',`<p class="error">${esc(e.message||'This page is temporarily unavailable. Please refresh in a moment.')}</p>`);}
 }
