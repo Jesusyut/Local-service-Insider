@@ -1,6 +1,164 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {database,partner,leadBody} from './helpers.js';import {intake} from '../src/routes/leads.js';import {book,bookingView} from '../src/services/booking.js';import {tick,deliver,followupDue} from '../src/services/scheduler.js';import {nextSmsTime} from '../src/services/sms.js';import {inbound} from '../src/routes/sms.js';
-const fake=()=>{const sent=[];return {sent,sms:{send:async m=>{sent.push(m);return {id:crypto.randomUUID()};}},email:{send:async()=>({logged:true})},meta:async()=>({logged:true})};};
-test('quiet hours defer to 8am and daylight windows are exclusive at 8pm',()=>{assert.equal(nextSmsTime(new Date('2030-01-01T07:59Z'),'UTC').toISOString(),'2030-01-01T08:00:00.000Z');assert.equal(nextSmsTime(new Date('2030-01-01T20:00Z'),'UTC').toISOString(),'2030-01-02T08:00:00.000Z');const l={created_at:'2030-01-01T23:00Z'};assert.equal(followupDue(l,'UTC')[1].at.toISOString(),'2030-01-02T10:00:00.000Z');});
-test('24h and 2h reminders send once even with repeated ticks',async()=>{const db=await database();try{await partner(db);const l=await intake(await leadBody());const view=await bookingView(l.booking_token),time=view.slots.find(t=>{const d=new Date(t);return d.getUTCHours()===12&&+d>Date.now()+30*3600000;});assert.ok(time);const {appointment:a}=await book(l.booking_token,{starts_at:time,install_address:'Test install address'});await db.query("UPDATE messages SET status='logged'");const f=fake(),at=new Date(+new Date(time)-24*3600000);await tick(at,f);await tick(at,f);assert.equal(f.sent.filter(m=>m.body.startsWith('Reminder:')).length,1);const two=new Date(+new Date(time)-2*3600000);await tick(two,f);await tick(two,f);assert.equal(f.sent.filter(m=>m.body.includes('See you soon.')).length,1);const row=(await db.query('SELECT * FROM appointments WHERE id=$1',[a.id])).rows[0];assert.ok(row.reminder_24h_sent_at);assert.ok(row.reminder_2h_sent_at);}finally{await db.close();}});
-test('STOP cancels queued messages, suppresses future sends and repeated submissions',async()=>{const db=await database();try{await partner(db);const b=await leadBody();await intake(b);await inbound({From:b.mobile,Body:'STOP',MessageSid:'incoming-stop'});const f=fake();await tick(new Date(Date.now()+3600000),f);assert.equal(f.sent.length,0);assert.equal((await db.query("SELECT * FROM messages WHERE channel='sms' AND status='queued'")).rows.length,0);assert.ok((await db.query('SELECT opted_out_at FROM leads')).rows[0].opted_out_at);await intake(b);assert.equal((await db.query("SELECT * FROM messages WHERE channel='sms' AND status='queued'")).rows.length,0);}finally{await db.close();}});
-test('a normal reply stops followups; provider failures back off and dead-letter after three attempts',async()=>{const db=await database();try{await partner(db);const b=await leadBody();await intake(b);await inbound({From:b.mobile,Body:'Please call later',MessageSid:'incoming-reply'});assert.ok((await db.query('SELECT replied_at FROM leads')).rows[0].replied_at);const at=new Date();at.setUTCHours(12,0,0,0);if(+at<Date.now())at.setUTCDate(at.getUTCDate()+1);const f={sms:{send:async()=>{throw Error('provider');}},email:{send:async()=>({logged:true})},meta:async()=>({logged:true})};await deliver(at,f);await deliver(new Date(+at+60000),f);await deliver(new Date(+at+360000),f);assert.equal((await db.query("SELECT * FROM messages WHERE channel='sms' AND status='failed'")).rows.length,1);assert.equal((await db.query("SELECT * FROM messages WHERE payload->>'category'='failure_alert'")).rows.length,1);}finally{await db.close();}});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { database, partner, leadBody } from "./helpers.js";
+import { intake } from "../src/routes/leads.js";
+import { book, bookingView } from "../src/services/booking.js";
+import { tick, deliver, followupDue } from "../src/services/scheduler.js";
+import { nextSmsTime } from "../src/services/sms.js";
+import { inbound } from "../src/routes/sms.js";
+const fake = () => {
+  const sent = [];
+  return {
+    sent,
+    sms: {
+      send: async (m) => {
+        sent.push(m);
+        return { id: crypto.randomUUID() };
+      },
+    },
+    email: { send: async () => ({ logged: true }) },
+    meta: async () => ({ logged: true }),
+  };
+};
+test("quiet hours defer to 8am and daylight windows are exclusive at 8pm", () => {
+  assert.equal(
+    nextSmsTime(new Date("2030-01-01T07:59Z"), "UTC").toISOString(),
+    "2030-01-01T08:00:00.000Z",
+  );
+  assert.equal(
+    nextSmsTime(new Date("2030-01-01T20:00Z"), "UTC").toISOString(),
+    "2030-01-02T08:00:00.000Z",
+  );
+  const l = { created_at: "2030-01-01T23:00Z" };
+  assert.equal(
+    followupDue(l, "UTC")[1].at.toISOString(),
+    "2030-01-02T10:00:00.000Z",
+  );
+});
+test("24h and 2h reminders send once even with repeated ticks", async () => {
+  const db = await database();
+  try {
+    await partner(db);
+    const l = await intake(await leadBody());
+    const view = await bookingView(l.booking_token),
+      time = view.slots.find((t) => {
+        const d = new Date(t);
+        return d.getUTCHours() === 12 && +d > Date.now() + 30 * 3600000;
+      });
+    assert.ok(time);
+    const { appointment: a } = await book(l.booking_token, {
+      starts_at: time,
+      install_address: "Test install address",
+    });
+    await db.query("UPDATE messages SET status='logged'");
+    const f = fake(),
+      at = new Date(+new Date(time) - 24 * 3600000);
+    await tick(at, f);
+    await tick(at, f);
+    assert.equal(
+      f.sent.filter((m) => m.body.startsWith("Reminder:")).length,
+      1,
+    );
+    const two = new Date(+new Date(time) - 2 * 3600000);
+    await tick(two, f);
+    await tick(two, f);
+    assert.equal(
+      f.sent.filter((m) => m.body.includes("See you soon.")).length,
+      1,
+    );
+    const row = (
+      await db.query("SELECT * FROM appointments WHERE id=$1", [a.id])
+    ).rows[0];
+    assert.ok(row.reminder_24h_sent_at);
+    assert.ok(row.reminder_2h_sent_at);
+  } finally {
+    await db.close();
+  }
+});
+test("STOP cancels queued messages, suppresses future sends and repeated submissions", async () => {
+  const db = await database();
+  try {
+    await partner(db);
+    const b = await leadBody();
+    await intake(b);
+    await inbound({
+      From: b.mobile,
+      Body: "STOP",
+      MessageSid: "incoming-stop",
+    });
+    const f = fake();
+    await tick(new Date(Date.now() + 3600000), f);
+    assert.equal(f.sent.length, 0);
+    assert.equal(
+      (
+        await db.query(
+          "SELECT * FROM messages WHERE channel='sms' AND status='queued'",
+        )
+      ).rows.length,
+      0,
+    );
+    assert.ok(
+      (await db.query("SELECT opted_out_at FROM leads")).rows[0].opted_out_at,
+    );
+    await intake(b);
+    assert.equal(
+      (
+        await db.query(
+          "SELECT * FROM messages WHERE channel='sms' AND status='queued'",
+        )
+      ).rows.length,
+      0,
+    );
+  } finally {
+    await db.close();
+  }
+});
+test("a normal reply stops followups; provider failures back off and dead-letter after three attempts", async () => {
+  const db = await database();
+  try {
+    await partner(db);
+    const b = await leadBody();
+    await intake(b);
+    await inbound({
+      From: b.mobile,
+      Body: "Please call later",
+      MessageSid: "incoming-reply",
+    });
+    assert.ok(
+      (await db.query("SELECT replied_at FROM leads")).rows[0].replied_at,
+    );
+    const at = new Date();
+    at.setUTCHours(12, 0, 0, 0);
+    if (+at < Date.now()) at.setUTCDate(at.getUTCDate() + 1);
+    const f = {
+      sms: {
+        send: async () => {
+          throw Error("provider");
+        },
+      },
+      email: { send: async () => ({ logged: true }) },
+      meta: async () => ({ logged: true }),
+    };
+    await deliver(at, f);
+    await deliver(new Date(+at + 60000), f);
+    await deliver(new Date(+at + 360000), f);
+    assert.equal(
+      (
+        await db.query(
+          "SELECT * FROM messages WHERE channel='sms' AND status='failed'",
+        )
+      ).rows.length,
+      1,
+    );
+    assert.equal(
+      (
+        await db.query(
+          "SELECT * FROM messages WHERE payload->>'category'='failure_alert'",
+        )
+      ).rows.length,
+      1,
+    );
+  } finally {
+    await db.close();
+  }
+});

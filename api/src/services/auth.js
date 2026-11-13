@@ -1,8 +1,100 @@
-import {randomBytes,createHmac,createHash,timingSafeEqual} from 'node:crypto';import bcrypt from 'bcryptjs';import {query,transaction,audit} from '../db.js';import {fail} from '../validation.js';
-const digest=v=>createHash('sha256').update(v).digest('hex');
-function secret(){const s=process.env.MAGIC_LINK_SECRET;if(!s||s.length<32)throw Error('MAGIC_LINK_SECRET must be at least 32 characters');return s;}
-export function magic(partnerId,now=Date.now()){const data=Buffer.from(JSON.stringify({id:partnerId,exp:now+7*86400000,nonce:randomBytes(16).toString('hex')})).toString('base64url');return data+'.'+createHmac('sha256',secret()).update(data).digest('base64url');}
-export function verifyMagic(token,now=Date.now()){const [data,sig,...rest]=String(token).split('.');if(!data||!sig||rest.length)fail('Invalid or expired sign-in link.',401);const a=Buffer.from(sig),b=Buffer.from(createHmac('sha256',secret()).update(data).digest('base64url'));if(a.length!==b.length||!timingSafeEqual(a,b))fail('Invalid or expired sign-in link.',401);let payload;try{payload=JSON.parse(Buffer.from(data,'base64url').toString());}catch{fail('Invalid sign-in link.',401);}if(!Number.isFinite(payload.exp)||payload.exp<now||payload.exp>now+7*86400000)fail('Expired sign-in link.',401);return payload;}
-export async function session(role,partnerId=null){const token=randomBytes(32).toString('hex');await query('INSERT INTO sessions(token_hash,partner_id,role,expires_at) VALUES($1,$2,$3,$4)',[digest(token),partnerId,role,new Date(Date.now()+(role==='admin'?8:168)*3600000)]);return token;}
-export async function adminLogin(password){if(!process.env.ADMIN_PASSWORD_HASH||!await bcrypt.compare(String(password||''),process.env.ADMIN_PASSWORD_HASH))fail('Invalid login.',401);return session('admin');}
-export function auth(role){return async(req,res,next)=>{try{const token=(req.get('authorization')||'').replace(/^Bearer /,'');if(!/^[a-f0-9]{64}$/.test(token))fail('Sign in required.',401);const row=(await query('SELECT s.*,p.status FROM sessions s LEFT JOIN partners p ON p.id=s.partner_id WHERE token_hash=$1 AND expires_at>now()',[digest(token)])).rows[0];if(!row||row.role!==role||(role==='partner'&&row.status!=='active'))fail('Sign in required.',401);req.auth=row;next();}catch(e){next(e);}};}
+import {
+  randomBytes,
+  createHmac,
+  createHash,
+  timingSafeEqual,
+} from "node:crypto";
+import bcrypt from "bcryptjs";
+import { query, transaction, audit } from "../db.js";
+import { fail } from "../validation.js";
+const digest = (v) => createHash("sha256").update(v).digest("hex");
+function secret() {
+  const s = process.env.MAGIC_LINK_SECRET;
+  if (!s || s.length < 32)
+    throw Error("MAGIC_LINK_SECRET must be at least 32 characters");
+  return s;
+}
+export function magic(partnerId, now = Date.now()) {
+  const data = Buffer.from(
+    JSON.stringify({
+      id: partnerId,
+      exp: now + 7 * 86400000,
+      nonce: randomBytes(16).toString("hex"),
+    }),
+  ).toString("base64url");
+  return (
+    data + "." + createHmac("sha256", secret()).update(data).digest("base64url")
+  );
+}
+export function verifyMagic(token, now = Date.now()) {
+  const [data, sig, ...rest] = String(token).split(".");
+  if (!data || !sig || rest.length)
+    fail("Invalid or expired sign-in link.", 401);
+  const a = Buffer.from(sig),
+    b = Buffer.from(
+      createHmac("sha256", secret()).update(data).digest("base64url"),
+    );
+  if (a.length !== b.length || !timingSafeEqual(a, b))
+    fail("Invalid or expired sign-in link.", 401);
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(data, "base64url").toString());
+  } catch {
+    fail("Invalid sign-in link.", 401);
+  }
+  if (
+    !Number.isFinite(payload.exp) ||
+    payload.exp < now ||
+    payload.exp > now + 7 * 86400000
+  )
+    fail("Expired sign-in link.", 401);
+  return payload;
+}
+export async function session(role, partnerId = null) {
+  const token = randomBytes(32).toString("hex");
+  await query(
+    "INSERT INTO sessions(token_hash,partner_id,role,expires_at) VALUES($1,$2,$3,$4)",
+    [
+      digest(token),
+      partnerId,
+      role,
+      new Date(Date.now() + (role === "admin" ? 8 : 168) * 3600000),
+    ],
+  );
+  return token;
+}
+export async function adminLogin(password) {
+  if (
+    !process.env.ADMIN_PASSWORD_HASH ||
+    !(await bcrypt.compare(
+      String(password || ""),
+      process.env.ADMIN_PASSWORD_HASH,
+    ))
+  )
+    fail("Invalid login.", 401);
+  return session("admin");
+}
+export function auth(role) {
+  return async (req, res, next) => {
+    try {
+      const token = (req.get("authorization") || "").replace(/^Bearer /, "");
+      if (!/^[a-f0-9]{64}$/.test(token)) fail("Sign in required.", 401);
+      const row = (
+        await query(
+          "SELECT s.*,p.status FROM sessions s LEFT JOIN partners p ON p.id=s.partner_id WHERE token_hash=$1 AND expires_at>now()",
+          [digest(token)],
+        )
+      ).rows[0];
+      if (
+        !row ||
+        row.role !== role ||
+        (role === "partner" && row.status !== "active")
+      )
+        fail("Sign in required.", 401);
+      req.auth = row;
+      next();
+    } catch (e) {
+      next(e);
+    }
+  };
+}
