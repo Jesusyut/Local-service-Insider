@@ -13,5 +13,6 @@ export const services=[
 ];
 export const options=services.flatMap(s=>s.options.map(([id,name])=>({id:`${s.id}:${id}`,name,service:s.name,serviceId:s.id})));
 export const drivers=copy['result.drivers'].split(' · ');
+export const dealsConsent=copy['deals.disclosure'];
 export const newsletterConsent=copy['gate.disclosure'];
 export const leadConsent=copy['quotes.consent'];

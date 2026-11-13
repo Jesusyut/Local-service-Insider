@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="The best local car care deals from top-rated shops, emailed when you're ready to buy. Free.">
+<meta name="theme-color" content="#1E2A33">
+<title>Local Car Care Deals</title>
+<link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/home.css">
+<script src="/tracking.js" defer></script>
+<script src="/deals.js" type="module"></script>
+</head>
+<body>
+<main id="app" aria-live="polite">
+<section class="flow deals" id="flow">
+<p class="wordmark">Local Car Care</p>
+<p class="fine deals-eyebrow">LOCAL CAR CARE DEALS</p>
+<h1>The best local car deals, sent when you’re ready.</h1>
+<p class="lede">Tell us what you’re in the market for. We watch the top-rated local shops and email you the best price and openings, so you never have to shop around.</p>
+<ul class="points">
+<li>Only highly rated shops we’ve checked out ourselves</li>
+<li>Real deals and fair prices, never spam</li>
+<li>Free. Unsubscribe anytime.</li>
+</ul>
+<form id="deals" novalidate>
+<fieldset class="deals-market"><legend class="field">What are you in the market for?</legend><div class="chips" id="market"></div></fieldset>
+<label class="field" for="firstName">First name<input id="firstName" name="firstName" type="text" autocomplete="given-name" maxlength="80" required></label>
+<label class="field" for="email">Email<input id="email" name="email" type="email" autocomplete="email" maxlength="254" required></label>
+<div id="challenge"></div>
+<button class="btn" id="submit">Send Me the Best Deals</button>
+<p class="fine" id="disclosure">You’ll get our free local car care deals email. Unsubscribe anytime.</p>
+<p class="fine"><a href="/privacy" target="_blank">Privacy</a> and <a href="/terms" target="_blank">Terms</a></p>
+</form>
+<div class="error" id="flow-error" role="alert" hidden></div>
+</section>
+</main>
+</body>
+</html>

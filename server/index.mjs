@@ -1,6 +1,7 @@
 import http from 'node:http';
 import {renderSearchPage,seoPath,siteOrigin} from './seo.mjs';
 import {createSpamCheck} from './spam-check.mjs';
+import {captureDeals} from './deals.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -63,6 +64,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/healthz'){await query('SELECT 1');return json(res,{ok:true});}
  if(process.env.MAINTENANCE_MODE==='true'){res.setHeader('Retry-After','120');return json(res,{error:'We are updating the price checker. Please try again shortly.'},503);}
  if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
+ if(path==='/api/deals'&&req.method==='POST'){rate(req,'deals',15);const result=await captureDeals(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/intake'&&req.method==='POST'){rate(req,'intake',15);const result=await captureIntake(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/intake/rate'&&req.method==='POST'){rate(req,'intake-rate',30);const result=await rateIntake(await body(req),{rangeFor});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/intake/quote'&&req.method==='POST'){rate(req,'intake-quote',10);const result=await requestQuote(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
@@ -109,7 +111,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/robots.txt'){res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: '+siteOrigin()+'/sitemap.xml\n');}
  if(path==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>'+siteOrigin()+seoPath+'</loc></url></urlset>');}
  if(path==='/pick'){res.writeHead(301,{Location:'/'+url.search,'Cache-Control':'no-cache'});return res.end();}
- const files={'/':'index.html','/insider.css':'insider.css','/insider.js':'insider.js','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
+ const files={'/':'index.html','/deals':'deals.html','/deals.js':'deals.js','/insider.css':'insider.css','/insider.js':'insider.js','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){if(!e.status)console.error('Request failed:',e.code||e.name);json(res,{error:e.status?e.message:'Something went wrong. Please try again.'},e.status||500);}});
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Local Car Care ready at http://localhost:${process.env.PORT||3000}`));
 if(process.env.MAINTENANCE_MODE!=='true')setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();

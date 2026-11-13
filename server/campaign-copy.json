@@ -108,5 +108,20 @@
   "intake.estimate.cta": "See My Estimate",
   "intake.estimate.headline": "Your local service estimate",
   "intake.estimate.note": "This is a broad estimate across available service packages and vehicle sizes. Your final quote depends on the work and your car.",
-  "pick.quote.consent": "By tapping Send to the shop, I agree that Local Car Care and the shop it picks for me may call or text me about this request, including by automated means. Consent isn't required to buy. Msg and data rates may apply."
+  "pick.quote.consent": "By tapping Send to the shop, I agree that Local Car Care and the shop it picks for me may call or text me about this request, including by automated means. Consent isn't required to buy. Msg and data rates may apply.",
+  "deals.eyebrow": "LOCAL CAR CARE DEALS",
+  "deals.headline": "The best local car deals, sent when you’re ready.",
+  "deals.sub": "Tell us what you’re in the market for. We watch the top-rated local shops and email you the best price and openings, so you never have to shop around.",
+  "deals.points": [
+    "Only highly rated shops we’ve checked out ourselves",
+    "Real deals and fair prices, never spam",
+    "Free. Unsubscribe anytime."
+  ],
+  "deals.q": "What are you in the market for?",
+  "deals.cta": "Send Me the Best Deals",
+  "deals.disclosure": "You’ll get our free local car care deals email. Unsubscribe anytime.",
+  "deals.thanks.headline": "You’re in, {name}.",
+  "deals.thanks.sub": "We’ll email you the best {service} deals from top-rated local shops near you.",
+  "deals.thanks.next": "Ready to buy sooner? Get your local price in two quick steps.",
+  "deals.thanks.cta": "Get My Local Price Now"
 }
