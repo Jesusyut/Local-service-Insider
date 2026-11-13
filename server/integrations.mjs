@@ -1,6 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto';
 import {query} from './db.mjs';
 import {syncBrevoContact} from './brevo.mjs';
+import {sendTelegramLead} from './telegram.mjs';
 export const hash=v=>createHash('sha256').update(v.trim().toLowerCase()).digest('hex');
 export async function enqueue(kind,payload,id=randomUUID()){await query('INSERT INTO outbox(id,kind,payload,status,created_at) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING',[id,kind,JSON.stringify(payload),'pending',new Date().toISOString()]);return id;}
 async function post(url,key,body,id){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(key?{Authorization:`Bearer ${key}`} :{}),...(id?{'Idempotency-Key':id}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error(`Provider returned HTTP ${r.status}`);}
@@ -16,6 +17,15 @@ export async function deliver(job){const p=JSON.parse(job.payload);
   const field=name=>p.custom_fields?.find(f=>f.name===name)?.value;
   const report=intake?.report?JSON.parse(intake.report):null;
   await syncBrevoContact({email:p.email,firstName:subscriber?.first_name||p.firstName,phone:intake?.phone||p.phone,service:report?.service||p.service||field('service'),serviceId:intake?.service_id||p.subscription_tags?.[0],stage:quote?'quote_requested':report?'estimate_completed':'contact_captured',year:intake?.vehicle_year,make:intake?.make,model:intake?.model,vehicle:intake?undefined:field('vehicle'),desiredDate:intake?.desired_date,timeWindow:quote?.preferred_time,range:report?.range,requestId:intake?.id,capturedAt:intake?.created_at||subscriber?.consent_at,source:JSON.parse(intake?.source||subscriber?.source||'{}')});
+ }else if(job.kind==='telegram'){
+  let lead=p;
+  if(p.intakeId){
+   const row=(await query('SELECT i.*,s.first_name,s.email,q.preferred_time,q.consent_text AS quote_consent FROM intake_leads i JOIN subscribers s ON s.id=i.subscriber_id LEFT JOIN intake_quote_requests q ON q.intake_id=i.id WHERE i.id=$1',[p.intakeId])).rows[0];
+   if(!row)throw Error('Notification lead was not found');
+   const report=row.report?JSON.parse(row.report):null;
+   lead={...p,id:row.id,firstName:row.first_name,email:row.email,phone:row.phone,service:report?.service||p.service,year:row.vehicle_year,make:row.make,model:row.model,desiredDate:row.desired_date,timeWindow:row.preferred_time,contactConsent:row.quote_consent||row.contact_text,newsletterConsent:row.newsletter_text,capturedAt:row.created_at,source:JSON.parse(row.source||'{}'),range:report?.range};
+  }
+  await sendTelegramLead(lead);
  }else if(job.kind==='meta'){
   if(!process.env.META_ACCESS_TOKEN||!process.env.META_PIXEL_ID)throw new Error('Meta is not configured');
   await post(`https://graph.facebook.com/${process.env.META_API_VERSION||'v25.0'}/${process.env.META_PIXEL_ID}/events?access_token=${encodeURIComponent(process.env.META_ACCESS_TOKEN)}`,null,{data:[p]});

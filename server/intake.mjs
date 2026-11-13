@@ -34,11 +34,12 @@ export async function captureIntake(b,{turnstile}){
   // A browser-generated request ID makes retries idempotent, including lost responses.
   if(process.env.DATABASE_URL)await q('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[id]);
   const previous=(await q('SELECT i.*,s.email,s.first_name FROM intake_leads i JOIN subscribers s ON s.id=i.subscriber_id WHERE i.id=$1',[id])).rows[0];
-  if(previous){if(previous.email!==email||previous.service_id!==service.id)fail('Start a new request to change the email or service.',409);await q('UPDATE intake_leads SET phone=$1,updated_at=$2 WHERE id=$3',[phone,now(),id]);await q('UPDATE subscribers SET first_name=$1 WHERE id=$2',[name,previous.subscriber_id]);if(previous.phone!==phone||previous.first_name!==name)await job(q,'newsletter-update-'+id+'-'+hash(phone+'|'+name),'newsletter',{email,intakeId:id,service:service.name});return;}
+  if(previous){if(previous.email!==email||previous.service_id!==service.id)fail('Start a new request to change the email or service.',409);await q('UPDATE intake_leads SET phone=$1,updated_at=$2 WHERE id=$3',[phone,now(),id]);await q('UPDATE subscribers SET first_name=$1 WHERE id=$2',[name,previous.subscriber_id]);if(previous.phone!==phone||previous.first_name!==name){await job(q,'newsletter-update-'+id+'-'+hash(phone+'|'+name),'newsletter',{email,intakeId:id,service:service.name});await job(q,'telegram-update-'+id+'-'+hash(phone+'|'+name),'telegram',{intakeId:id,service:service.name,stage:'Contact updated'});}return;}
   const subscriberId=randomUUID(),stamp=now();
   const saved=(await q('INSERT INTO subscribers(id,first_name,email,zip,consent_at,consent_text,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(email) DO UPDATE SET first_name=excluded.first_name,consent_at=excluded.consent_at,consent_text=excluded.consent_text RETURNING id',[subscriberId,name,email,'',stamp,newsletterConsent,JSON.stringify(source),stamp])).rows[0];
   await q('INSERT INTO intake_leads(id,subscriber_id,service_id,phone,contact_text,newsletter_text,consent_at,source,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',[id,saved.id,service.id,phone,copy['intake.contact.disclosure'],newsletterConsent,stamp,JSON.stringify(source),stamp,stamp]);
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
+  await job(q,'telegram-intake-'+id,'telegram',{intakeId:id,service:service.name,stage:'Contact captured'});
   await job(q,'newsletter-intake-'+id,'newsletter',{email,intakeId:id,service:service.name,custom_fields:[{name:'service',value:service.name}],subscription_tags:[service.id]});
   fresh=true;
  });
@@ -60,6 +61,7 @@ export async function completeIntake(b,{rangeFor}){
   const current=(await q('SELECT report_key FROM intake_leads WHERE id=$1'+(process.env.DATABASE_URL?' FOR UPDATE':''),[row.id])).rows[0];
   if(current.report_key===key)return;
   await q('UPDATE intake_leads SET vehicle_year=$1,make=$2,model=$3,desired_date=$4,report=$5,report_key=$6,updated_at=$7 WHERE id=$8',[year,make,model,date,JSON.stringify(report),key,now(),row.id]);
+  await job(q,'telegram-complete-'+row.id+'-'+key,'telegram',{intakeId:row.id,service:service.name,stage:'Estimate completed'});
   await job(q,'newsletter-complete-'+row.id+'-'+key,'newsletter',{email:row.email,intakeId:row.id,service:service.name});
   const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:service.id==='smog'?2:0,maximumFractionDigits:service.id==='smog'?2:0}).format(v);
   await job(q,'estimate-'+row.id+'-'+key,'report',{to:row.email,senderName:'Caesar from Local Price Check',subject:`Your ${service.name} estimate`,text:`Hi ${row.first_name},\n\n${service.name} estimate for your ${year} ${make} ${model}:\nLow: ${money(report.range.low)}\nTypical: ${money(report.range.typical)}\nHigh: ${money(report.range.high)}\n\n${report.note}\n\nDesired completion date: ${date}\nThis is your requested date, not a confirmed booking.\n\nCaesar`});
@@ -99,6 +101,7 @@ export async function requestQuote(b,{turnstile}){
  await transaction(async q=>{
   if(process.env.DATABASE_URL)await q('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[row.id]);
   await q('UPDATE intake_leads SET vehicle_year=$1,make=$2,model=$3,desired_date=$4,updated_at=$5 WHERE id=$6',[year,make,model,date,stamp,row.id]);
+  await job(q,'telegram-quote-'+row.id+'-'+hash([year,make,model,date,time].join('|')),'telegram',{intakeId:row.id,service:service.name,stage:'Quote requested'});
   await job(q,'newsletter-quote-'+row.id+'-'+hash([year,make,model,date,time].join('|')),'newsletter',{email:row.email,intakeId:row.id,service:service.name});
   const previous=(await q('SELECT intake_id FROM intake_quote_requests WHERE intake_id=$1',[row.id])).rows[0];
   if(previous){await q('UPDATE intake_quote_requests SET preferred_time=$1,consent_text=$2,consent_at=$3,updated_at=$4 WHERE intake_id=$5',[time,copy['pick.quote.consent'],stamp,stamp,row.id]);return;}
