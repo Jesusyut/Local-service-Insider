@@ -39,9 +39,9 @@ function applyAngle(){
  $('#angle-points').innerHTML=a.points.map(p=>`<li>${esc(p)}</li>`).join('');
 }
 
-function shell(top,body){
+function shell(top,body,modifier=''){
  if(challengeId!==undefined&&window.turnstile){window.turnstile.remove(challengeId);challengeId=undefined;}
- app.innerHTML=`<section class="flow" id="flow">${top}${body}<div class="error" id="flow-error" role="alert" hidden></div></section>`;
+ app.innerHTML=`<section class="flow ${modifier}" id="flow">${top}${body}<div class="error" id="flow-error" role="alert" hidden></div></section>`;
 }
 function progress(n){
  return `<div class="flow-top"><div class="flow-top-row">${n===1?'<button type="button" class="link" id="back">Back</button>':''}<span>Step ${n} of 2</span></div><div class="bar" aria-hidden="true"><span class="on"></span><span class="${n===2?'on':''}"></span></div></div>`;
@@ -77,11 +77,14 @@ const slides=[
  {key:'email',q:()=>`Thanks, ${state.firstName.trim()}. Where should we email your local rate?`,label:'Email',type:'email',attrs:'autocomplete="email" inputmode="email" maxlength="254" enterkeyhint="next"',check:v=>/^\S+@\S+\.\S+$/.test(v.trim()),err:'Enter a valid email.'},
  {key:'phone',q:()=> 'Last one. What’s your mobile number?',label:'Mobile number',type:'tel',attrs:'autocomplete="tel" inputmode="tel" maxlength="30" enterkeyhint="done"',check:v=>/^(1)?\d{10}$/.test(v.replace(/\D/g,'')),err:'Enter a 10-digit US mobile number.'}
 ];
+function contactSupport(){
+ return `<aside class="contact-support" aria-label="Your price check and next steps"><p class="support-eyebrow">Know the price. Pick your next step.</p><h2>Your local price gauge</h2><p>See where local prices sit before you request a quote.</p><span class="support-service">${esc(service().name)}</span><div class="support-gauge" aria-hidden="true"></div><div class="support-ticks" aria-hidden="true"><span>Low</span><span>Typical</span><span>High</span></div><p class="support-range-note">Your estimated range appears after this step. A rough estimate, not a shop quote.</p><hr><h2>What happens next</h2><ol class="support-steps"><li><b>1</b>See your local price range.</li><li><b>2</b>Add your vehicle to request a quote.</li><li><b>3</b>Choose your preferred day and time.</li></ol><p class="support-eyebrow">Scheduling preferences</p><div class="support-schedule"><span>Morning</span><span>Midday</span><span>Evening</span></div><p class="support-schedule-note">Choose after your estimate. The shop confirms availability.</p><div class="support-deals"><strong>Local car care deals, straight to your email.</strong><p>Take advantage of local service deals and price alerts. Unsubscribe anytime.</p></div></aside>`;
+}
 function renderContact(){
  if(slide===0)void track('GateViewed');
  const s=slides[slide],last=slide===slides.length-1;
  const note=slide===1?`<p class="fine">${esc(config.newsletterConsent)}</p>`:last?`<p class="fine">${esc(config.copy['intake.contact.disclosure'])}</p>${legal}`:'';
- shell(progress(2),`<div class="dots" aria-hidden="true">${slides.map((_,i)=>`<span class="${i<=slide?'on':''}"></span>`).join('')}</div><form class="slide" id="slide" novalidate><h1>${esc(s.q())}</h1><label class="field">${esc(s.label)}<input name="${s.key}" type="${s.type}" value="${esc(state[s.key])}" required ${s.attrs}></label>${last?'<div id="challenge"></div>':''}<button class="btn">${last?'Show my local rate':'Next'}</button>${note}</form>`);
+ shell('',`<div class="contact-layout"><div class="contact-main">${progress(2)}<div class="dots" aria-hidden="true">${slides.map((_,i)=>`<span class="${i<=slide?'on':''}"></span>`).join('')}</div><form class="slide" id="slide" novalidate><h1>${esc(s.q())}</h1><label class="field">${esc(s.label)}<input name="${s.key}" type="${s.type}" value="${esc(state[s.key])}" required ${s.attrs}></label>${last?'<div id="challenge"></div>':''}<button class="btn">${last?'Show my local rate':'Next'}</button>${note}</form></div>${contactSupport()}</div>`,'contact-flow');
  if(last)challenge();
  $('#slide').onsubmit=async e=>{
   e.preventDefault();const value=$('#slide input').value;
