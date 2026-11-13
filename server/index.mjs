@@ -1,7 +1,7 @@
 import http from 'node:http';
 import {renderSearchPage,seoPath,siteOrigin} from './seo.mjs';
 import {createSpamCheck} from './spam-check.mjs';
-import {captureDeals} from './deals.mjs';
+import {captureDeals,dealsInterest} from './deals.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -64,6 +64,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/healthz'){await query('SELECT 1');return json(res,{ok:true});}
  if(process.env.MAINTENANCE_MODE==='true'){res.setHeader('Retry-After','120');return json(res,{error:'We are updating the price checker. Please try again shortly.'},503);}
  if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
+ if(path==='/api/deals/interest'&&req.method==='POST'){rate(req,'deals-interest',30);const result=await dealsInterest(await body(req));void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/deals'&&req.method==='POST'){rate(req,'deals',15);const result=await captureDeals(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/intake'&&req.method==='POST'){rate(req,'intake',15);const result=await captureIntake(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/intake/rate'&&req.method==='POST'){rate(req,'intake-rate',30);const result=await rateIntake(await body(req),{rangeFor});void drain().catch(()=>{});return json(res,result);}

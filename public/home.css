@@ -112,7 +112,5 @@ legend{padding:0;margin-bottom:10px;font-size:15px;font-weight:600}
 /* /deals */
 .deals .deals-eyebrow{letter-spacing:.12em;font-weight:600;margin-top:-10px}
 .deals form{display:flex;flex-direction:column;gap:18px}
-.deals-market{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
-.deals-market legend{padding:0;margin-bottom:10px}
 .deals .chips{grid-template-columns:repeat(2,minmax(0,1fr))}
 .deals .chip{min-height:52px;line-height:1.2;padding:8px 10px}
