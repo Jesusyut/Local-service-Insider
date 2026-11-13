@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {renderSearchPage,seoPath,siteOrigin} from './seo.mjs';
 import {createSpamCheck} from './spam-check.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
@@ -103,8 +104,12 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.method!=='GET'&&req.method!=='HEAD')fail('Not found',404);
  if(path==='/images/google-stars.png'||/^\/fonts\/barlow-(latin-(400|500|600)|semi-condensed-latin-(600|700))-normal\.woff2$/.test(path)){const bytes=await readFile(new URL('../public'+path,import.meta.url));res.writeHead(200,{'Content-Type':path.endsWith('.png')?'image/png':'font/woff2','Cache-Control':'public, max-age=604800'});return res.end(req.method==='HEAD'?undefined:bytes);}
  if(/^\/images\/(tint|detail|ceramic|body|starlight|oil|smog|lighting)\.webp$/.test(path)){const bytes=await readFile(new URL('../public'+path,import.meta.url));res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=86400'});return res.end(req.method==='HEAD'?undefined:bytes);}
+ if(path===seoPath+'/'){res.writeHead(301,{Location:seoPath+url.search});return res.end();}
+ if(path===seoPath){const html=renderSearchPage();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});return res.end(req.method==='HEAD'?undefined:html);}
+ if(path==='/robots.txt'){res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: '+siteOrigin()+'/sitemap.xml\n');}
+ if(path==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>'+siteOrigin()+seoPath+'</loc></url></urlset>');}
  if(path==='/pick'){res.writeHead(301,{Location:'/'+url.search,'Cache-Control':'no-cache'});return res.end();}
- const files={'/':'index.html','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
+ const files={'/':'index.html','/insider.css':'insider.css','/insider.js':'insider.js','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){if(!e.status)console.error('Request failed:',e.code||e.name);json(res,{error:e.status?e.message:'Something went wrong. Please try again.'},e.status||500);}});
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Phoenix Car Care ready at http://localhost:${process.env.PORT||3000}`));
 if(process.env.MAINTENANCE_MODE!=='true')setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();

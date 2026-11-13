@@ -48,3 +48,17 @@ test('pick flow shows the local rate after contact, then takes vehicle, day and 
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM events WHERE id=? AND name='QuoteRequest'").get('quote-'+id).n,1);
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE kind='report' AND id LIKE 'rate-%'").get().n,1);db.close();
 });
+
+test('San Diego organic page serves ungated guides, consistent canonical metadata and crawler endpoints',async()=>{
+ const r=await fetch(base+'/san-diego/car-care');assert.equal(r.status,200);const html=await r.text();
+ assert.equal((html.match(/<h1>/g)||[]).length,1);assert.equal((html.match(/class="guide" id=/g)||[]).length,8);
+ assert.match(html,/<title>Car Care Services in San Diego \| Local Service Insider<\/title>/);assert.match(html,/rel="canonical" href="https:\/\/phoenix-car-care-bvyc.onrender.com\/san-diego\/car-care"/);
+ assert.match(html,/California Smog Check program/);assert.doesNotMatch(html,/16\.15|ratingValue|aggregateRating|"@type":"LocalBusiness"/);
+ const schema=JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);assert.equal(schema['@graph'][1].mainEntity.itemListElement.length,8);
+ const script=await(await fetch(base+'/insider.js')).text();assert.match(script,/\/api\/intake/);assert.doesNotMatch(script,/\/api\/intake\/rate|\/api\/check/);
+ assert.equal((await fetch(base+'/insider.css')).status,200);
+ const robots=await(await fetch(base+'/robots.txt')).text();assert.match(robots,/Allow: \//);assert.match(robots,/Sitemap: https:\/\/phoenix-car-care-bvyc.onrender.com\/sitemap.xml/);
+ const sitemap=await(await fetch(base+'/sitemap.xml')).text();assert.match(sitemap,/<loc>https:\/\/phoenix-car-care-bvyc.onrender.com\/san-diego\/car-care<\/loc>/);
+ const slash=await fetch(base+'/san-diego/car-care/',{redirect:'manual'});assert.equal(slash.status,301);assert.equal(slash.headers.get('location'),'/san-diego/car-care');
+ assert.equal((await(await fetch(base+'/san-diego/car-care',{method:'HEAD'})).text()).length,0);
+});
