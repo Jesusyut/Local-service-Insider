@@ -1,29 +1,40 @@
-// Phoenix research seeds. Published asking prices / broad service estimates, not verified customer transactions.
-export const market='phoenix-photo-v1';
-const S={tint:'https://www.tintingsource.com/blog/window-tinting-cost-phoenix',shade:'https://shadefxshop.com/pages/build-your-own',shadePricing:'https://shadefxshop.com/cdn/shop/t/9/assets/pricing.js?v=99299074145213369581793840322',detail:'https://azdetailers.com/pricing/',mobile:'https://www.signaturemobiledetailaz.com/',coating:'https://bsdetailing.com/guides/how-much-does-ceramic-coating-cost-phoenix-az',body:'https://autobodyrepairpros.com/blog/auto-body-repair-cost-phoenix-az/',collision:'https://phxautobody.com/collision-repair-cost-phoenix/',oil:'https://bellautospa.com/oil-lube/',oilGuide:'https://jimmygsautomotive.com/our-services/lube-oil-filter-change/'};
+// Published California asking prices, not verified transactions or guaranteed ceilings.
+export const market='san-diego-ca-v2';
+export const estimateNotes={
+ tint:'San Diego published tint packages across film tiers. Glass coverage, film, removal and tax affect the final quote.',
+ detail:'San Diego published detailing packages, from basic cleaning to deep detail. Size, condition and scope affect the final quote.',
+ coating:'San Diego published ceramic-coating packages across protection terms. Paint correction and vehicle size affect the final quote.',
+ body:'San Diego published dent, bumper and repaint references. Structural collision repairs are excluded; damage inspection is required.',
+ starlight:'Broader California reference from Lancaster, not a San Diego price survey. Star count, roof fitment and fabric affect the final quote.',
+ oil:'San Diego oil-change reference only, up to five quarts. Other mechanical repairs require diagnosis and a written quote; extra oil, filters and tax may cost more.',
+ smog:'San Diego published inspection prices include the $8.25 certificate. Shop fees vary; older or heavy-duty vehicles may cost more. Check your DMV notice for testing and STAR requirements.',
+ lighting:'Broader California ambient-lighting reference from Ripon, not a San Diego price survey. Headlight upgrades and exterior lighting are excluded; fitment and extras need a quote.'
+};
+const S={tint:'https://www.sbmobiledetailing.com/services/mobile-window-tint',coastal:'https://coastaltintsd.com/pricing',detail:'https://awesomeguys-sd.com/pricing/',reflection:'https://reflectiondetailingsd.com/pricing/',coating:'https://www.adonisdetail.com/ceramic-coating-san-diego',body:'https://www.autopaintsd.com/pricing.html',paint:'https://www.autopaintsd.com/',dent:'https://bumperfixers.com/',stars:'https://www.starluxautos.com/',oil:'https://www.dualtoneauto.com/oil-change',smog:'https://www.montezumasmog.com/pricing',ambient:'https://interstellarinteriors.com/upgrade'};
 export const seedRanges=[],seedFallbacks=[];
-function add(option,type,low,typical,high,urls,note){seedRanges.push({option,type,low,typical,high,sourceNote:`Phoenix research checked 2026-11-11. ${note} Low/high bound published asking prices; typical is an estimate. ${urls.join(' ')}`});}
+function note(service,urls,scope){return 'California research checked 2026-11-13. '+estimateNotes[service]+' '+scope+' Low/high are published reference points, not guaranteed limits; typical is a reference estimate, not a statistical median. '+urls.join(' ');}
+function add(option,type,band,urls,scope){seedRanges.push({option,type,low:band[0],typical:band[1],high:band[2],sourceNote:note(option.split(':')[0],urls,scope)});}
+function fallback(service,type,band,urls,scope){seedFallbacks.push({service,type,low:band[0],typical:band[1],high:band[2],sourceNote:note(service,urls,scope)});}
 for(const type of ['sedan','coupe','suv','truck','van']){
- const car=type==='sedan'||type==='coupe',van=type==='van',truck=type==='truck';
- // No film question: the range deliberately spans dyed, carbon and ceramic products.
- const tint=type==='sedan'?[150,400,650]:type==='coupe'?[150,450,750]:truck?[250,650,1000]:[200,550,1000];
- add('tint:all',type,...tint,[S.tint,S.shade],van?'Broader larger-vehicle tint range; no van-specific sample.':'Sides/back across film tiers; no assumption about a specific brand.');
- add('tint:full-strip',type,tint[0]+75,tint[1]+75,tint[2]+75,[S.tint,S.shade],'Composite estimate: side/back band plus published $75 visor-strip add-on.');
- add('tint:windshield',type,150,250,350,[S.shade,'https://fastlanetints.com/price-list/'],'Broad windshield film estimate; coverage, product, glass shape and vehicle fitment affect price.');
- const detail={sedan:{interior:[90,129,270],exterior:[79,115,170],full:[180,199,250]},coupe:{interior:[90,129,160],exterior:[79,100,150],full:[180,190,199]},suv:{interior:[90,149,285],exterior:[89,140,190],full:[180,229,260]},truck:{interior:[90,169,285],exterior:[99,140,190],full:[180,249,260]},van:{interior:[90,299,325],exterior:[140,240,290],full:[180,299,350]}}[type];
- for(const [option,band]of Object.entries(detail))add('detail:'+option,type,...band,[S.detail,S.mobile,S.shade],'Published packages vary in cleaning depth and condition; van rows include minivan/XL van rates.');
- if(car){add('coating:3-year',type,600,800,1000,[S.coating],'Published entry 2–3-year band used for 3-year option.');add('coating:5-year',type,1200,1600,2000,[S.coating],'Published premium 5+-year band.');}
- else if(!van){add('coating:3-year',type,900,1150,1400,[S.coating],'Published SUV/truck entry 2–3-year band.');add('coating:5-year',type,1600,2200,2800,[S.coating],'Published SUV/truck premium 5+-year band.');}
- // Broad service fallback for one-year/unspecified duration or thin body-type data.
- seedFallbacks.push({service:'coating',type,low:499,typical:1499,high:2499,sourceNote:`Broader Phoenix ceramic-coating/vehicle-type estimate across durations; not duration-specific. Large vehicles explicitly listed by provider. ${S.detail}`});
- for(const [option,band]of Object.entries({dent:[150,400,900],bumper:[600,1000,1500],collision:[1000,4000,15000],paint:[3500,5750,9000]}))add('body:'+option,type,...band,[S.body,S.collision],'Broad local body-work guide; damage severity, structural work and parts are not known. General guide is reused across body types without invented size multipliers.');
- for(const [option,band]of Object.entries({standard:[750,950,1150],dense:[1350,1550,1850],shooting:[900,1500,2000]}))add('starlight:'+option,type,...band,[S.shade,S.shadePricing],'ShadeFX public calculator: standard interpreted as 500–900 stars, dense 1000–1500, shooting as 500–1500 plus $150 shooting-star add-on. Roof fitment and trim work may add cost; no body-size multiplier.');
- for(const [option,band]of Object.entries({conventional:[45,49.99,75],blend:[65,69.99,95],synthetic:[85,89.99,130]}))add('oil:'+option,type,...band,[S.oil,S.oilGuide],'Published oil/filter bands; typical uses local posted price. Capacity and filter can increase cost; not a capacity-specific quote.');
- seedFallbacks.push({service:'oil',type,low:45,typical:69.99,high:130,sourceNote:`Broader local oil-service range across formulations for Not sure. ${S.oil} ${S.oilGuide}`});
- // Arizona emissions: state-set fee at state stations, so low=typical=high.
- add('smog:obd',type,16.15,16.15,16.15,['https://myazcar.com/testing-info-and-fees'],'State-set OBD emissions test fee for 1996+ vehicles in the Phoenix area; not a shop price.');
- add('lighting:ambient',type,600,750,1050,[S.shade,S.shadePricing],'Installed ambient package prices (Signature through Platinum); general fitment estimate across body types.');
- add('lighting:exterior',type,250,750,850,[S.shade,'https://www.shadefxcustoms.com/services-store/p/intermediate-service-lrnkc'],'Broad custom LED/underglow starting prices; wiring, light count and hardware vary.');
- seedFallbacks.push({service:'lighting',type,low:250,typical:750,high:1050,sourceNote:`Broader Phoenix custom-lighting estimate; used for headlight upgrade when no comparable vehicle-specific headlight quote exists. Not a headlight-specific sample; confirm parts and labor with installer. ${S.shade} ${S.shadePricing}`});
+ const car=['sedan','coupe'].includes(type),large=['truck','van'].includes(type),size=car?0:large?2:1;
+ const tint=type==='coupe'?[189,349,549]:type==='sedan'?[219,399,599]:type==='truck'?[329,449,649]:[329,499,699];
+ const fit=type==='van'?'Broader large-vehicle reference; no van-specific tint quote.':'Published side/back packages across carbon, dyed and ceramic film.';
+ add('tint:all',type,tint,[S.tint,S.coastal],fit);
+ add('tint:full-strip',type,tint.map(v=>v+79),[S.tint,S.coastal],'Composite side/back reference plus Coastal Tint posted $79 visor strip. '+fit);
+ add('tint:windshield',type,[249,large?399:299,large?499:399],[S.tint,S.coastal],'Full windshield ceramic packages; van uses broader large-vehicle reference.');
+ add('detail:interior',type,[[90,180,180],[90,220,220],[100,260,260]][size],[S.detail],'Basic and full interior starting packages; middle uses full interior. SUV uses medium size; large SUVs may cost more.');
+ add('detail:exterior',type,[169,[180,210,240][size],285],[S.detail,S.reflection],'Exterior detail packages, excluding basic wash-only services.');
+ add('detail:full',type,[[215,350,425],[215,400,510],[250,460,510]][size],[S.detail,S.reflection],'Combined interior/exterior packages vary in depth; large class includes full-size SUV/truck/van.');
+ add('coating:1-year',type,[700,[700,800,900][size],900],[S.detail],'Awesome Guys 1-year S/M/L package references.');
+ add('coating:3-year',type,[1100,[1100,1250,1400][size],1400],[S.detail],'Awesome Guys 3-year S/M/L package references.');
+ add('coating:5-year',type,[1299,[1600,1800,2000][size],2000],[S.detail,S.coating],'Adonis 5-year starting package and Awesome Guys 5-year S/M/L references.');
+ fallback('coating',type,[700,[1100,1250,1400][size],2000],[S.detail,S.coating],'Unspecified protection duration across 1/3/5-year packages.');
+ for(const [option,band]of Object.entries({dent:[150,300,750],bumper:[350,475,600],paint:[1620,3240,4725]}))add('body:'+option,type,band,[S.body,S.paint,S.dent],'Broad damage/package reference reused across body types without invented size multipliers. Paint high is a premium-tier starting point, not a maximum. Bumper middle is the midpoint of the posted band.');
+ for(const [option,band]of Object.entries({standard:[625,775,925],dense:[1150,1350,1600],shooting:[800,950,1100]}))add('starlight:'+option,type,band,[S.stars],'Lancaster installed packages: standard 500–900 stars, dense 1000–1500; shooting is standard plus posted $175 add-on. No invented body-size multiplier.');
+ add('oil:blend',type,[59.95,59.95,59.95],[S.oil],'One shop posted synthetic-blend package, not a fixed market fee.');
+ add('oil:synthetic',type,[79.95,79.95,79.95],[S.oil],'One shop posted full-synthetic package, not a fixed market fee.');
+ fallback('oil',type,[59.95,69.95,79.95],[S.oil],'Blend/high-mileage/full-synthetic posted packages; formulation unspecified.');
+ add('smog:obd',type,[58,58,type==='truck'?98:78],[S.smog],'Regular light-duty initial inspection plus certificate; spans 2000+ and older rates. Excludes coupons, RVs, reinspection, diesel-specific and heavy-duty charges.');
+ add('lighting:ambient',type,[995,1195,1195],[S.ambient],'Ripon coupe/two-door and four-door base packages. Van uses broader large-vehicle reference; upgrades and extras are not included.');
 }
-export async function loadSeeds(query){for(const r of seedRanges)await query('INSERT INTO market_price_ranges(market,service_option_id,vehicle_type,low,typical,high,source_note,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(market,service_option_id,vehicle_type) DO NOTHING',[market,r.option,r.type,r.low,r.typical,r.high,r.sourceNote,'2026-11-11']);for(const r of seedFallbacks)await query('INSERT INTO market_service_ranges(market,service_id,vehicle_type,low,typical,high,source_note,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(market,service_id,vehicle_type) DO NOTHING',[market,r.service,r.type,r.low,r.typical,r.high,r.sourceNote,'2026-11-11']);}
+export async function loadSeeds(query){for(const r of seedRanges)await query('INSERT INTO market_price_ranges(market,service_option_id,vehicle_type,low,typical,high,source_note,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(market,service_option_id,vehicle_type) DO NOTHING',[market,r.option,r.type,r.low,r.typical,r.high,r.sourceNote,'2026-11-13']);for(const r of seedFallbacks)await query('INSERT INTO market_service_ranges(market,service_id,vehicle_type,low,typical,high,source_note,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(market,service_id,vehicle_type) DO NOTHING',[market,r.service,r.type,r.low,r.typical,r.high,r.sourceNote,'2026-11-13']);}

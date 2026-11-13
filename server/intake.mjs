@@ -1,3 +1,4 @@
+import {estimateNotes} from './seeds.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {query,transaction} from './db.mjs';
 import {services,types,copy,newsletterConsent} from './catalog.mjs';
@@ -7,7 +8,7 @@ const now=()=>new Date().toISOString();
 const text=(v,n=100)=>String(v??'').trim().slice(0,n);
 const fail=(message,status=400)=>{throw Object.assign(Error(message),{status});};
 const sourceOf=s=>Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'].map(k=>[k,text(s?.[k],200)]));
-export const localToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Phoenix',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+export const localToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const job=async(q,id,kind,payload)=>q("INSERT INTO outbox(id,kind,payload,status,created_at) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING",[id,kind,JSON.stringify(payload),'pending',now()]);
 
 // Broad service range across every seeded package and body type; no vehicle class is assumed.
@@ -53,9 +54,9 @@ export async function completeIntake(b,{rangeFor}){
  const year=Number(b.year),make=text(b.make),model=text(b.model),date=text(b.desiredDate,10),parsed=new Date(date+'T00:00:00Z');
  if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+1||!make||!model)fail('Enter the vehicle year, make and model.');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==date||date<localToday())fail('Choose today or a future completion date.');
- if(row.service_id==='smog'&&year<1996)fail('This OBD test is for 1996 or newer vehicles. Choose another service for an older vehicle.');
+
  const service=services.find(s=>s.id===row.service_id),range=await serviceRange(service,rangeFor);
- const report={range,service:service.name,serviceId:service.id,firstName:row.first_name,year,make,model,desiredDate:date,note:copy[service.id==='smog'?'result.smog.fair':'intake.estimate.note']};
+ const report={range,service:service.name,serviceId:service.id,firstName:row.first_name,year,make,model,desiredDate:date,note:estimateNotes[service.id]};
  const key=createHash('sha256').update(JSON.stringify(report)).digest('hex');
  await transaction(async q=>{
   const current=(await q('SELECT report_key FROM intake_leads WHERE id=$1'+(process.env.DATABASE_URL?' FOR UPDATE':''),[row.id])).rows[0];
@@ -72,7 +73,7 @@ export async function completeIntake(b,{rangeFor}){
 // /pick: the local rate is shown right after contact capture, before any vehicle questions.
 export async function rateIntake(b,{rangeFor}){
  const row=await intakeRow(b.id),service=services.find(s=>s.id===row.service_id),range=await serviceRange(service,rangeFor);
- const report={range,service:service.name,serviceId:service.id,firstName:row.first_name,note:copy[service.id==='smog'?'result.smog.fair':'intake.estimate.note']};
+ const report={range,service:service.name,serviceId:service.id,firstName:row.first_name,note:estimateNotes[service.id]};
  const key=createHash('sha256').update(JSON.stringify(report)).digest('hex');
  await transaction(async q=>{
   const current=(await q('SELECT report_key FROM intake_leads WHERE id=$1'+(process.env.DATABASE_URL?' FOR UPDATE':''),[row.id])).rows[0];
@@ -96,7 +97,7 @@ export async function requestQuote(b,{turnstile}){
  if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+1||!make||!model)fail('Enter the vehicle year, make and model.');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==date||date<localToday())fail('Choose today or a later day.');
  if(!timeWindows[time])fail('Choose a time of day.');
- if(row.service_id==='smog'&&year<1996)fail('This OBD test is for 1996 or newer vehicles. Choose another service for an older vehicle.');
+
  const service=services.find(s=>s.id===row.service_id),stamp=now(),eventId='quote-'+row.id;let fresh=false;
  await transaction(async q=>{
   if(process.env.DATABASE_URL)await q('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[row.id]);

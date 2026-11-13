@@ -109,7 +109,7 @@ function renderRate(){
 <div class="label"><div class="label-head"><p>Local price label</p><p>${esc(monthLabel())}</p></div>
 <div class="label-sec"><p class="k">Service</p><p class="v">${esc(name)}</p></div>
 <div class="prices">${flat?`<div class="prices-row"><div></div><div><small>Typical</small><strong>${money(r.typical)}</strong></div><div></div></div>`:`<div class="prices-row"><div><small>Low</small><strong>${money(r.low)}</strong></div><div><small>Typical</small><strong>${money(r.typical)}</strong></div><div><small>High</small><strong>${money(r.high)}</strong></div></div><div class="track" aria-hidden="true"><span id="marker"></span></div>`}</div>
-<div class="label-foot"><p>${esc(report.note)}</p><p class="fine">From published prices at local shops. A broad estimate, not a quote.</p></div></div>
+<div class="label-foot"><p>${esc(report.note)}</p><p class="fine">Published California shop prices. A broad reference, not a quote.</p></div></div>
 <div class="panel"><h2>Get a real quote from a top-rated ${esc(lower)} shop near you.</h2><p class="sub">They text you a price for your car. You pick a time that works. No obligation.</p><button type="button" class="btn" id="want-quote">Text me a quote</button></div>
 <p class="fine">We also emailed this to ${esc(state.email)}.</p>`);
  // CSP blocks inline style attributes, so the marker is positioned through the CSSOM.

@@ -25,7 +25,7 @@ const limits=new Map();
 function rate(req,scope,max=30){const ip=(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',').pop().trim();const key=scope+ip;let record=limits.get(key);if(!record||record.until<Date.now())record={count:0,until:Date.now()+600000};record.count++;limits.set(key,record);if(record.count>max)fail('Please wait a few minutes before trying again.',429);if(limits.size>10000)for(const [k,v]of limits)if(v.until<Date.now())limits.delete(k);}
 const spamCheck=createSpamCheck({siteKey:process.env.TURNSTILE_SITE_KEY,secretKey:process.env.TURNSTILE_SECRET_KEY});
 const turnstile=token=>spamCheck.verify(token);
-function validateCheck(b){const year=Number(b.year),amount=b.noQuote?null:Number(b.amount);if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+1)fail('Choose a valid vehicle year.');if(!text(b.make)||!text(b.model)||!types.includes(b.vehicleType)||!options.some(o=>o.id===b.option))fail('Complete your vehicle and service details.');if(b.option==='smog:obd'&&year<1996)fail('This emissions test is for 1996 or newer vehicles.');if(amount!==null&&(!Number.isFinite(amount)||amount<=0||amount>100000))fail('Enter a quote between $1 and $100,000.');return {market,year,make:text(b.make),model:text(b.model),vehicleType:b.vehicleType,option:b.option,amount,shopName:text(b.shopName),source:Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'].map(k=>[k,text(b.source?.[k],200)]))};}
+function validateCheck(b){const year=Number(b.year),amount=b.noQuote?null:Number(b.amount);if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+1)fail('Choose a valid vehicle year.');if(!text(b.make)||!text(b.model)||!types.includes(b.vehicleType)||!options.some(o=>o.id===b.option))fail('Complete your vehicle and service details.');if(amount!==null&&(!Number.isFinite(amount)||amount<=0||amount>100000))fail('Enter a quote between $1 and $100,000.');return {market,year,make:text(b.make),model:text(b.model),vehicleType:b.vehicleType,option:b.option,amount,shopName:text(b.shopName),source:Object.fromEntries(['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid'].map(k=>[k,text(b.source?.[k],200)]))};}
 async function rangeFor(option,type){
  const cutoff=new Date();cutoff.setFullYear(cutoff.getFullYear()-1);
  const [a,b,f]=await Promise.all([
@@ -33,7 +33,7 @@ async function rangeFor(option,type){
  query('SELECT low,typical,high,updated_at,source_note FROM market_price_ranges WHERE market=$1 AND service_option_id=$2 AND vehicle_type=$3',[market,option,type]),
  query('SELECT low,typical,high,updated_at,source_note FROM market_service_ranges WHERE market=$1 AND service_id=$2 AND vehicle_type=$3',[market,option.split(':')[0],type])]);
  const values=a.rows.filter(r=>JSON.parse(r.payload).market===market&&(r.zip===''||validZip(r.zip))).map(r=>Number(r.amount));
- const exact=computeRange(option==='smog:obd'?[]:values,b.rows[0]||null);if(exact)return exact;
+ const exact=computeRange(values,b.rows[0]||null);if(exact)return exact;
  // An unspecified coating duration can use the broader coating/body-type range.
  // Coverage-specific tint/PPF/wrap options must not inherit unrelated job scopes.
  if(f.rows[0])return {...f.rows[0],source:'service-fallback',samples:values.length};
@@ -111,6 +111,6 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/pick'){res.writeHead(301,{Location:'/'+url.search,'Cache-Control':'no-cache'});return res.end();}
  const files={'/':'index.html','/insider.css':'insider.css','/insider.js':'insider.js','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){if(!e.status)console.error('Request failed:',e.code||e.name);json(res,{error:e.status?e.message:'Something went wrong. Please try again.'},e.status||500);}});
-server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Phoenix Car Care ready at http://localhost:${process.env.PORT||3000}`));
+server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Local Car Care ready at http://localhost:${process.env.PORT||3000}`));
 if(process.env.MAINTENANCE_MODE!=='true')setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();
 process.on('SIGTERM',()=>server.close(()=>process.exit(0)));
