@@ -1,5 +1,35 @@
-import twilio from 'twilio';import {DateTime,IANAZone} from 'luxon';
-export function nextSmsTime(now,zone){if(zone!=='UTC'&&!IANAZone.isValidZone(zone||''))throw Error('Recipient timezone is required');const t=DateTime.fromJSDate(new Date(now),{zone});if(t.hour<8)return t.startOf('day').set({hour:8}).toJSDate();if(t.hour>=20)return t.plus({days:1}).startOf('day').set({hour:8}).toJSDate();return new Date(now);}
-export function canSend({consent,opted_out_at,suppressed}){return !!consent&&!opted_out_at&&!suppressed;}
+import twilio from "twilio";
+import { DateTime, IANAZone } from "luxon";
+export function nextSmsTime(now, zone) {
+  if (zone !== "UTC" && !IANAZone.isValidZone(zone || ""))
+    throw Error("Recipient timezone is required");
+  const t = DateTime.fromJSDate(new Date(now), { zone });
+  if (t.hour < 8) return t.startOf("day").set({ hour: 8 }).toJSDate();
+  if (t.hour >= 20)
+    return t.plus({ days: 1 }).startOf("day").set({ hour: 8 }).toJSDate();
+  return new Date(now);
+}
+export function canSend({ consent, opted_out_at, suppressed }) {
+  return !!consent && !opted_out_at && !suppressed;
+}
 // Replace this driver without changing scheduling, suppression or consent policy.
-export const driver={async send({to,body}){if(process.env.SMS_ENABLED!=='true')return {logged:true};const {TWILIO_ACCOUNT_SID:sid,TWILIO_AUTH_TOKEN:token,TWILIO_FROM_NUMBER:from}=process.env;if(!sid||!token||!from)throw Error('SMS configuration missing');const client=twilio(sid,token,{autoRetry:false,timeout:15000});try{const m=await client.messages.create({to,from,body});return {id:m.sid,status:m.status};}catch(e){throw Object.assign(Error('SMS provider failed'),{code:String(e.code||e.status||'network')});}}};
+export const driver = {
+  async send({ to, body }) {
+    if (process.env.SMS_ENABLED !== "true") return { logged: true };
+    const {
+      TWILIO_ACCOUNT_SID: sid,
+      TWILIO_AUTH_TOKEN: token,
+      TWILIO_FROM_NUMBER: from,
+    } = process.env;
+    if (!sid || !token || !from) throw Error("SMS configuration missing");
+    const client = twilio(sid, token, { autoRetry: false, timeout: 15000 });
+    try {
+      const m = await client.messages.create({ to, from, body });
+      return { id: m.sid, status: m.status };
+    } catch (e) {
+      throw Object.assign(Error("SMS provider failed"), {
+        code: String(e.code || e.status || "network"),
+      });
+    }
+  },
+};

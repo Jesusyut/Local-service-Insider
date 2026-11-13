@@ -1,4 +1,73 @@
-import {Router} from 'express';import {randomBytes,randomUUID} from 'node:crypto';import {transaction,lock,audit} from '../db.js';import {validateLead,CONSENT} from '../validation.js';import {route} from '../services/routing.js';import {queueMeta} from '../services/metaCapi.js';import {contactLead} from '../services/notifications.js';
-export const leads=Router();
-export async function intake(body,context={}){const v=validateLead(body);return transaction(async c=>{await lock(c,'phone:'+v.phone_e164);const original=(await c.query("SELECT * FROM leads WHERE phone_e164=$1 AND created_at>=now()-interval '30 days' AND duplicate_of IS NULL ORDER BY created_at LIMIT 1",[v.phone_e164])).rows[0];const partner=original?null:await route(c,v.zip);const suppressed=(await c.query('SELECT opted_out_at FROM sms_suppressions WHERE phone_e164=$1',[v.phone_e164])).rows[0];const lead={...v,id:randomUUID(),client_ip:context.ip||'',user_agent:context.userAgent||'',consent_text:CONSENT,consent_version:'v1',consent_at:new Date(),partner_id:original?.partner_id||partner?.id||null,status:original?'duplicate':suppressed?'dead':partner?'new':'unassigned',duplicate_of:original?.id||null,booking_token:randomBytes(32).toString('hex'),opted_out_at:suppressed?.opted_out_at||null};const keys=Object.keys(lead);await c.query(`INSERT INTO leads(${keys.join(',')}) VALUES(${keys.map((_,i)=>'$'+(i+1)).join(',')})`,keys.map(k=>lead[k]));await audit(c,'lead',lead.id,'created',{status:lead.status,partner_id:lead.partner_id,duplicate_of:lead.duplicate_of});if(original)return {ok:true,booking_token:original.booking_token};await queueMeta(c,'Lead',v.meta_event_id,lead);if(!suppressed)await contactLead(c,lead,partner);return {ok:true,booking_token:lead.booking_token};});}
-leads.post('/',async(req,res)=>res.status(201).json(await intake(req.body,{ip:req.ip,userAgent:req.get('user-agent')})));
+import { Router } from "express";
+import { randomBytes, randomUUID } from "node:crypto";
+import { transaction, lock, audit } from "../db.js";
+import { validateLead, CONSENT } from "../validation.js";
+import { route } from "../services/routing.js";
+import { queueMeta } from "../services/metaCapi.js";
+import { contactLead } from "../services/notifications.js";
+export const leads = Router();
+export async function intake(body, context = {}) {
+  const v = validateLead(body);
+  return transaction(async (c) => {
+    await lock(c, "phone:" + v.phone_e164);
+    const original = (
+      await c.query(
+        "SELECT * FROM leads WHERE phone_e164=$1 AND created_at>=now()-interval '30 days' AND duplicate_of IS NULL ORDER BY created_at LIMIT 1",
+        [v.phone_e164],
+      )
+    ).rows[0];
+    const partner = original ? null : await route(c, v.zip);
+    const suppressed = (
+      await c.query(
+        "SELECT opted_out_at FROM sms_suppressions WHERE phone_e164=$1",
+        [v.phone_e164],
+      )
+    ).rows[0];
+    const lead = {
+      ...v,
+      id: randomUUID(),
+      client_ip: context.ip || "",
+      user_agent: context.userAgent || "",
+      consent_text: CONSENT,
+      consent_version: "v1",
+      consent_at: new Date(),
+      partner_id: original?.partner_id || partner?.id || null,
+      status: original
+        ? "duplicate"
+        : suppressed
+          ? "dead"
+          : partner
+            ? "new"
+            : "unassigned",
+      duplicate_of: original?.id || null,
+      booking_token: randomBytes(32).toString("hex"),
+      opted_out_at: suppressed?.opted_out_at || null,
+    };
+    const keys = Object.keys(lead);
+    await c.query(
+      `INSERT INTO leads(${keys.join(",")}) VALUES(${keys.map((_, i) => "$" + (i + 1)).join(",")})`,
+      keys.map((k) => lead[k]),
+    );
+    await audit(c, "lead", lead.id, "created", {
+      status: lead.status,
+      partner_id: lead.partner_id,
+      duplicate_of: lead.duplicate_of,
+    });
+    if (original)
+      return {
+        ok: true,
+        booking_token: original.booking_token,
+        duplicate: true,
+      };
+    await queueMeta(c, "Lead", v.meta_event_id, lead);
+    if (!suppressed) await contactLead(c, lead, partner);
+    return { ok: true, booking_token: lead.booking_token };
+  });
+}
+leads.post("/", async (req, res) =>
+  res
+    .status(201)
+    .json(
+      await intake(req.body, { ip: req.ip, userAgent: req.get("user-agent") }),
+    ),
+);

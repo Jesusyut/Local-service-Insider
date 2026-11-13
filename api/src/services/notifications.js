@@ -1,6 +1,66 @@
-import {enqueue,publicLink,apiLink,adminAlert} from './queue.js';
-export async function partnerAlert(c,key,partner,lead,body){const common={leadId:lead.id,timezone:partner.timezone,consent:!!partner.notifications_consent_at,category:'operator'};for(const to of new Set([partner.owner_phone,...partner.notify_phones].filter(Boolean)))await enqueue(c,key+'-sms-'+to,'sms',to,body,common);for(const to of new Set([partner.owner_email,...partner.notify_emails].filter(Boolean)))await enqueue(c,key+'-email-'+to,'email',to,body,{...common,subject:'Local Insider project update'});}
-export async function contactLead(c,lead,partner){const link=publicLink('/turf/book.html?t='+lead.booking_token);if(!partner){await adminAlert(c,'unassigned-'+lead.id,`Unassigned turf project: ${lead.first_name} ${lead.last_name}; ${lead.phone_e164}; ZIP ${lead.zip}; ${lead.project_scope}`,lead.id);await enqueue(c,'holding-'+lead.id,'sms',lead.phone_e164,"Thanks! We're matching you with an installer and will text you shortly.",{leadId:lead.id,timezone:lead.contact_timezone,consent:true,category:'holding'});return;}
- await enqueue(c,'welcome-'+lead.id+'-'+partner.id,'sms',lead.phone_e164,`Hi ${lead.first_name}, it's Local Insider. Thanks for checking turf prices. ${partner.business_name} can come out for a free estimate. Grab a time here: ${link}. Reply STOP to opt out.`,{leadId:lead.id,timezone:partner.timezone,consent:true,category:'welcome'});
- const body=`${lead.first_name} ${lead.last_name}\n${lead.phone_e164}\nZIP ${lead.zip}\nYard: ${lead.yard_size}\nSurface: ${lead.current_surface}\nProject: ${lead.project_scope}\nTimeline: ${lead.timeline}\nPortal: ${apiLink('/partner')}`;await partnerAlert(c,'partner-new-'+lead.id+'-'+partner.id,partner,lead,body);
+import { enqueue, publicLink, apiLink, adminAlert } from "./queue.js";
+export async function partnerAlert(c, key, partner, lead, body) {
+  const common = {
+    leadId: lead.id,
+    timezone: partner.timezone,
+    consent: !!partner.notifications_consent_at,
+    category: "operator",
+  };
+  for (const to of new Set(
+    [partner.owner_phone, ...partner.notify_phones].filter(Boolean),
+  ))
+    await enqueue(c, key + "-sms-" + to, "sms", to, body, common);
+  for (const to of new Set(
+    [partner.owner_email, ...partner.notify_emails].filter(Boolean),
+  ))
+    await enqueue(c, key + "-email-" + to, "email", to, body, {
+      ...common,
+      subject: "Local Insider project update",
+    });
+}
+export async function contactLead(c, lead, partner) {
+  const link = publicLink("/turf/book.html?t=" + lead.booking_token);
+  if (!partner) {
+    await adminAlert(
+      c,
+      "unassigned-" + lead.id,
+      `Unassigned turf project: ${lead.first_name} ${lead.last_name}; ${lead.phone_e164}; ZIP ${lead.zip}; ${lead.project_scope}`,
+      lead.id,
+    );
+    await enqueue(
+      c,
+      "holding-" + lead.id,
+      "sms",
+      lead.phone_e164,
+      "Thanks! We're matching you with an installer and will text you shortly.",
+      {
+        leadId: lead.id,
+        timezone: lead.contact_timezone,
+        consent: true,
+        category: "holding",
+      },
+    );
+    return;
+  }
+  await enqueue(
+    c,
+    "welcome-" + lead.id + "-" + partner.id,
+    "sms",
+    lead.phone_e164,
+    `Hi ${lead.first_name}, it's Local Insider. Thanks for checking turf prices. ${partner.business_name} can come out for a free estimate. Grab a time here: ${link}. Reply STOP to opt out.`,
+    {
+      leadId: lead.id,
+      timezone: partner.timezone,
+      consent: true,
+      category: "welcome",
+    },
+  );
+  const body = `${lead.first_name} ${lead.last_name}\n${lead.phone_e164}\nZIP ${lead.zip}\nYard: ${lead.yard_size}\nSurface: ${lead.current_surface}\nProject: ${lead.project_scope}\nTimeline: ${lead.timeline}\nPortal: ${apiLink("/partner")}`;
+  await partnerAlert(
+    c,
+    "partner-new-" + lead.id + "-" + partner.id,
+    partner,
+    lead,
+    body,
+  );
 }
