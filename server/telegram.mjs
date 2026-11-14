@@ -4,7 +4,7 @@ export function telegramText(lead){
  const digits=lead.serviceId==='smog'||lead.option?.startsWith('smog:')||lead.service==='Smog check'?2:0;
  const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:digits,maximumFractionDigits:digits}).format(v);
  const validRange=Number.isFinite(low)&&Number.isFinite(high)&&low>0&&high>=low;
- const fields={Event:lead.stage,Request:lead.id,Name:lead.firstName,Email:lead.email,Phone:lead.phone,Service:lead.service,Year:lead.year,Make:lead.make,Model:lead.model,'Desired date':lead.desiredDate,'Preferred time':lead.timeWindow,'Estimate low':validRange?money(low):undefined,'Estimate typical':validRange&&Number.isFinite(typical)&&typical>=low&&typical<=high?money(typical):undefined,'Estimate high':validRange?money(high):undefined};
+ const fields={Event:lead.stage,Request:lead.id,Name:lead.firstName,Email:lead.email,Phone:lead.phone,Service:lead.service,Year:lead.year,Make:lead.make,Model:lead.model,'Desired date':lead.desiredDate,'Preferred time':lead.timeWindow,Package:lead.package,'Add-ons':lead.addons,Total:lead.total,'Balance at drop-off':lead.balance,Notes:lead.notes,'Estimate low':validRange?money(low):undefined,'Estimate typical':validRange&&Number.isFinite(typical)&&typical>=low&&typical<=high?money(typical):undefined,'Estimate high':validRange?money(high):undefined};
  const lines=['Local Car Care lead',...Object.entries(fields).filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=>k+': '+clean(v))];
  return lines.join('\n');
 }

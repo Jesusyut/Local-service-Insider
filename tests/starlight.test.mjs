@@ -1,0 +1,31 @@
+import test,{before,after} from 'node:test';import assert from 'node:assert/strict';import {spawn} from 'node:child_process';import {mkdtemp,rm} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {randomUUID} from 'node:crypto';
+let proc,dir;const base='http://127.0.0.1:3196';
+const api=async(path,data)=>{const r=await fetch(base+path,{method:data?'POST':'GET',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined});return {status:r.status,data:await r.json()};};
+before(async()=>{dir=await mkdtemp(join(tmpdir(),'starlight-test-'));proc=spawn(process.execPath,['server/index.mjs'],{env:{...process.env,NODE_ENV:'test',DATABASE_URL:'',PORT:'3196',ADMIN_PASSWORD:'x',META_PIXEL_ID:'',META_ACCESS_TOKEN:'',TURNSTILE_SECRET_KEY:'',RESEND_API_KEY:'',EMAIL_FROM:'',BEEHIIV_API_KEY:'',SQLITE_PATH:join(dir,'t.db')},stdio:'ignore'});for(let i=0;i<60;i++){try{if((await fetch(base+'/healthz')).ok)return;}catch{}await new Promise(r=>setTimeout(r,100));}throw Error('server did not start');});
+after(async()=>{if(proc&&proc.exitCode===null){await new Promise(r=>{proc.once('exit',r);proc.kill();});}await rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});});
+const tomorrow=()=>{const d=new Date(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles'}).format(new Date())+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);};
+test('starlight store page and config are served',async()=>{
+ const r=await fetch(base+'/starlight');assert.equal(r.status,200);const html=await r.text();
+ assert.match(html,/Starlight headliners, installed by a top-rated local pro\./);assert.match(html,/\/starlight\.js/);
+ assert.equal((await fetch(base+'/starlight.js')).headers.get('content-type'),'text/javascript');
+ const c=(await api('/api/starlight')).data;
+ assert.deepEqual(c.tiers.map(t=>[t.stars,t.price]),[[500,849],[600,949],[750,1149],[850,1249],[1000,1399]]);
+ assert.equal(c.deposit,250);assert.equal(c.minDate,tomorrow());assert.equal(c.onlineDeposit,false);assert.equal(c.phone,null);
+});
+test('order totals are computed on the server, validated, and retries do not duplicate',async()=>{
+ const body={id:randomUUID(),stars:750,addons:['shooting','suede','shooting'],year:2026,make:'Kia',model:'K5 GT Line',date:tomorrow(),time:'Morning',firstName:'Antoni',email:'antoni@example.test',phone:'(619) 555-0134',notes:'',total:1,disclosureVersion:'starlight-v1',source:{utm_campaign:'starlight-luxury'}};
+ assert.equal((await api('/api/starlight-order',{...body,stars:700})).status,400);
+ assert.equal((await api('/api/starlight-order',{...body,addons:['free']})).status,400);
+ assert.equal((await api('/api/starlight-order',{...body,date:'2020-01-01'})).status,400);
+ assert.equal((await api('/api/starlight-order',{...body,time:'Midnight'})).status,400);
+ assert.equal((await api('/api/starlight-order',{...body,phone:'123'})).status,400);
+ assert.equal((await api('/api/starlight-order',{...body,disclosureVersion:'old'})).status,400);
+ const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);
+ assert.equal(ok.data.total,1149+295+495);assert.equal(ok.data.deposit,250);assert.equal(ok.data.balance,1939-250);assert.equal(ok.data.checkoutUrl,'');
+ assert.equal((await api('/api/starlight-order',body)).status,200);
+ const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
+ const o=db.prepare('SELECT * FROM starlight_orders WHERE id=?').get(body.id);assert.equal(o.total,1939);assert.equal(o.stars,750);assert.equal(o.phone,'6195550134');assert.equal(o.status,'awaiting-deposit');
+ assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'telegram-starlight-%'").get().n,1);
+ const t=JSON.parse(db.prepare("SELECT payload FROM outbox WHERE id=?").get('telegram-starlight-'+body.id).payload);assert.equal(t.total,'$1,939');assert.match(t.addons,/Shooting stars \$295/);
+ const {telegramText}=await import('../server/telegram.mjs');assert.match(telegramText(t),/Balance at drop-off: \$1,689/);
+});

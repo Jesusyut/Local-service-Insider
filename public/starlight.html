@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Starlight headliners in San Diego. See every star package to scale, pick your extras, and book your install online with a $250 deposit.">
+<meta name="theme-color" content="#0A0C12">
+<title>Starlight Headliners · Local Car Care</title>
+<link rel="preload" href="/fonts/barlow-semi-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/home.css">
+<link rel="stylesheet" href="/starlight.css">
+<script src="/tracking.js" defer></script>
+<script src="/starlight.js" type="module"></script>
+</head>
+<body>
+<main class="store" id="app">
+<header class="store-head"><p class="wordmark">Local Car Care</p><a id="head-call" href="#ask" hidden></a></header>
+<section class="hero">
+<p class="eyebrow">Starlight headliners · San Diego</p>
+<h1>Starlight headliners, installed by a top-rated local pro.</h1>
+<p class="lede">Pick your star count and see it drawn to scale, add extras, then lock your install day online with a $250 deposit.</p>
+</section>
+
+<div class="build">
+<div class="stage" aria-label="Preview of your headliner">
+<div class="sky"><canvas id="sky" role="img" aria-label="Headliner preview"></canvas>
+<div class="sky-cap"><b id="cap-stars">750 stars</b><span>Every star drawn to scale on the same roof</span></div></div>
+</div>
+<div class="config">
+<section class="step"><h2><small>STEP 1</small>Pick your star count</h2><div class="tiers" id="tiers" role="radiogroup" aria-label="Star package"></div></section>
+<section class="step"><h2><small>STEP 2</small>Try a color</h2><p class="fine">Preview only. Your stars do 1,000+ colors from the app and remote, so you can change them anytime.</p><div class="swatches" id="swatches"></div></section>
+<section class="step"><h2><small>STEP 3</small>Add extras</h2><div class="addons" id="addons"></div></section>
+<section class="incl"><h3>Every package includes</h3><ul class="points">
+<li>Fiber-optic stars hand-placed across your headliner</li>
+<li>1,000+ colors, twinkle and music-sync modes</li>
+<li>Phone app and remote control</li>
+<li>Clean hard-wired install, no drilling into the roof</li>
+<li>Done in a day at our partner shop</li></ul></section>
+</div>
+</div>
+
+<div class="lower">
+<form class="book" id="book" novalidate>
+<section class="step"><h2><small>STEP 4</small>Your car and install day</h2>
+<div class="row"><label class="field">Year<input id="year" inputmode="numeric" maxlength="4" autocomplete="off" required></label><label class="field">Make<input id="make" maxlength="40" required></label></div>
+<label class="field">Model<input id="model" maxlength="60" required></label>
+<label class="field">Install day<input id="date" type="date" required></label>
+<fieldset><legend>Drop-off time</legend><div class="times" id="times"></div></fieldset>
+</section>
+<section class="step"><h2><small>STEP 5</small>Your details</h2>
+<label class="field">First name<input id="firstName" autocomplete="given-name" maxlength="80" required></label>
+<label class="field">Email<input id="email" type="email" autocomplete="email" maxlength="254" required></label>
+<label class="field">Mobile phone<input id="phone" type="tel" autocomplete="tel" maxlength="20" required></label>
+<label class="field">Anything we should know? <span class="opt">Optional</span><textarea id="notes" maxlength="500" placeholder="Sunroof, star pattern ideas, color you love"></textarea></label>
+</section>
+<div id="challenge"></div>
+<div class="error" id="err" role="alert" hidden></div>
+<button class="btn" id="pay">Reserve with $250 deposit</button>
+<p class="fine" id="terms">Your $250 deposit holds your day and is fully refundable up to 48 hours before. The balance is due at drop-off, before work starts. <span id="consent"></span> <a href="/privacy" target="_blank">Privacy</a> · <a href="/terms" target="_blank">Terms</a></p>
+</form>
+<aside class="side">
+<div class="receipt" aria-live="polite"><div class="receipt-head"><span>Your order</span><span id="r-total-h"></span></div>
+<div class="receipt-rows" id="rows"></div>
+<div class="due"><div><small>Due today</small><strong id="r-dep">$250</strong></div><div><small>At drop-off</small><strong id="r-bal"></strong></div></div></div>
+<div class="ask" id="ask"><b>Questions first?</b><p class="fine" id="ask-text">Reply to any email from us and a real person gets back to you the same day.</p><div class="ask-links" id="ask-links" hidden></div></div>
+</aside>
+</div>
+
+<section class="faq" aria-label="Common questions">
+<h2>Good to know</h2>
+<details><summary>What does the deposit do?</summary><p>It reserves your install day with our partner shop. It comes off your total, and you get it all back if you cancel 48+ hours before.</p></details>
+<details><summary>How long does it take?</summary><p>Most installs are done the same day. Drop off in your time window and we’ll text you when it’s ready.</p></details>
+<details><summary>Will it damage my headliner?</summary><p>No drilling into the roof. The fibers go through the headliner board and the light source is hard-wired out of sight.</p></details>
+<details><summary>Can I see it before I pay the balance?</summary><p>You pay the balance at drop-off, before work starts, and the installer walks you through the layout first.</p></details>
+</section>
+</main>
+<div class="buybar" id="buybar"><div><small id="bar-sum">750 stars</small><strong id="bar-total"></strong></div><button class="btn" id="bar-go" type="button">Book my day</button></div>
+</body>
+</html>
