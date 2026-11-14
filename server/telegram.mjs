@@ -3,8 +3,8 @@ export function telegramText(lead){
  const range=lead.range,low=Number(range?.low),high=Number(range?.high),typical=Number(range?.typical);
  const digits=lead.serviceId==='smog'||lead.option?.startsWith('smog:')||lead.service==='Smog check'?2:0;
  const money=v=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:digits,maximumFractionDigits:digits}).format(v);
- const priceRange=Number.isFinite(low)&&Number.isFinite(high)&&low>0&&high>=low?`${money(low)}${high!==low?'–'+money(high):''}${Number.isFinite(typical)&&typical>=low&&typical<=high?' (typical '+money(typical)+')':''}`:undefined;
- const fields={Event:lead.stage,Request:lead.id,Name:lead.firstName,Email:lead.email,Phone:lead.phone,Service:lead.service,'Price range':priceRange,Year:lead.year,Make:lead.make,Model:lead.model,'Desired date':lead.desiredDate,'Preferred time':lead.timeWindow};
+ const validRange=Number.isFinite(low)&&Number.isFinite(high)&&low>0&&high>=low;
+ const fields={Event:lead.stage,Request:lead.id,Name:lead.firstName,Email:lead.email,Phone:lead.phone,Service:lead.service,Year:lead.year,Make:lead.make,Model:lead.model,'Desired date':lead.desiredDate,'Preferred time':lead.timeWindow,'Estimate low':validRange?money(low):undefined,'Estimate typical':validRange&&Number.isFinite(typical)&&typical>=low&&typical<=high?money(typical):undefined,'Estimate high':validRange?money(high):undefined};
  const lines=['Local Car Care lead',...Object.entries(fields).filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=>k+': '+clean(v))];
  return lines.join('\n');
 }
