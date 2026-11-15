@@ -6,19 +6,20 @@ import {localToday} from './intake.mjs';
 // Prices live here only; the browser shows them but the server computes every total.
 export const starlightCatalog={
  tiers:[
-  {stars:500,price:849,tag:'Starter'},
-  {stars:600,price:949,tag:''},
-  {stars:750,price:1149,tag:'Most popular'},
-  {stars:850,price:1249,tag:''},
-  {stars:1000,price:1399,tag:'Full sky'}],
+  {stars:500,price:1195,tag:'Starter'},
+  {stars:600,price:1350,tag:''},
+  {stars:750,price:1550,tag:'Most popular'},
+  {stars:850,price:1695,tag:''},
+  {stars:1000,price:1895,tag:'Full sky'}],
  addons:[
   {id:'shooting',name:'Shooting stars',price:295,note:'Moving meteor streaks across the sky.'},
   {id:'dual',name:'Dual color',price:295,note:'Two star colors at once, set from the app.'},
   {id:'ambient',name:'Ambient trim lighting',price:495,note:'Matching light lines in the doors and dash.'},
   {id:'suede',name:'Suede headliner',price:495,note:'New suede-wrapped liner behind the stars.'}],
  times:['Morning','Midday','Afternoon'],
- // Real discounts off list price. Keep every package at least ~$350 over wholesale.
- codes:{INSIDER100:{off:100,label:'Local Insider member deal'}},
+ // Member price per package (list is the walk-in price). Wholesale is 499/599/699/799/899,
+ // so members still leave $450-$600 margin per job.
+ codes:{INSIDER:{label:'Local Insider member price',prices:{500:949,600:1079,750:1225,850:1349,1000:1499}}},
  deposit:250,
  consent:'We’ll only text and email you about this booking.',
  disclosureVersion:'starlit-v1'
@@ -41,8 +42,8 @@ export function priceOrder(stars,addonIds,codeText){
  const ids=[...new Set(Array.isArray(addonIds)?addonIds:[])];
  const addons=ids.map(id=>starlightCatalog.addons.find(a=>a.id===id)||fail('Pick add-ons from the list.'));
  const code=codeText?findCode(codeText):null;if(codeText&&!code)fail('That code isn’t valid.');
- const list=tier.price+addons.reduce((s,a)=>s+a.price,0),total=list-(code?.off||0),deposit=starlightCatalog.deposit;
- return {tier,addons,code,list,total,deposit,balance:total-deposit};
+ const off=code?tier.price-code.prices[tier.stars]:0,list=tier.price+addons.reduce((s,a)=>s+a.price,0),total=list-off,deposit=starlightCatalog.deposit;
+ return {tier,addons,code,off,list,total,deposit,balance:total-deposit};
 }
 
 export function starlightConfig(){
@@ -60,7 +61,7 @@ function checkoutUrl(id,email){
 export async function placeStarlightOrder(b,{turnstile}){
  await turnstile(b.turnstileToken);
  if(b.disclosureVersion!==starlightCatalog.disclosureVersion)fail('Please refresh to see the current booking terms.');
- const {tier,addons,code,list,total,deposit,balance}=priceOrder(b.stars,b.addons,b.code);
+ const {tier,addons,code,off,list,total,deposit,balance}=priceOrder(b.stars,b.addons,b.code);
  const id=text(b.id,36),name=text(b.firstName,80),email=text(b.email,254).toLowerCase(),phone=text(b.phone,30).replace(/\D/g,'');
  const year=Number(b.year),make=text(b.make,40),model=text(b.model,60),date=text(b.date,10),time=text(b.time,20),notes=text(b.notes,500),source=sourceOf(b.source);
  if(!/^[0-9a-f-]{36}$/i.test(id))fail('Please refresh and try again.');
@@ -76,8 +77,8 @@ export async function placeStarlightOrder(b,{turnstile}){
   const stamp=now();
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
   await q('INSERT INTO starlight_orders(id,first_name,email,phone,year,make,model,stars,addons,total,deposit,desired_date,time_window,notes,status,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)',[id,name,email,phone,year,make,model,tier.stars,JSON.stringify(addons.map(a=>a.id)),total,deposit,date,time,notes,'awaiting-deposit',JSON.stringify(source),stamp]);
-  if(code)await q('INSERT INTO starlight_order_codes(order_id,code,discount,list_total,created_at) VALUES($1,$2,$3,$4,$5)',[id,code.code,code.off,list,stamp]);
-  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total)+(code?` (${code.code} −${money(code.off)} off ${money(list)})`:''),balance:money(balance),notes});
+  if(code)await q('INSERT INTO starlight_order_codes(order_id,code,discount,list_total,created_at) VALUES($1,$2,$3,$4,$5)',[id,code.code,off,list,stamp]);
+  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total)+(code?` (${code.code} −${money(off)} off ${money(list)})`:''),balance:money(balance),notes});
   fresh=true;
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{em:[hash(email)],ph:[hash(phone.length===10?'1'+phone:phone)]});

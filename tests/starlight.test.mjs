@@ -9,7 +9,7 @@ test('starlight store page and config are served',async()=>{
  assert.match(html,/Starlit/);assert.doesNotMatch(html,/Local Car Care|tracking\.js/);assert.match(html,/noindex/);assert.match(html,/\/starlight\.js/);
  assert.equal((await fetch(base+'/starlight.js')).headers.get('content-type'),'text/javascript');
  const c=(await api('/api/starlight')).data;
- assert.deepEqual(c.tiers.map(t=>[t.stars,t.price]),[[500,849],[600,949],[750,1149],[850,1249],[1000,1399]]);
+ assert.deepEqual(c.tiers.map(t=>[t.stars,t.price]),[[500,1195],[600,1350],[750,1550],[850,1695],[1000,1895]]);
  assert.equal(c.deposit,250);assert.equal(c.minDate,tomorrow());assert.equal(c.onlineDeposit,false);assert.equal(c.phone,null);
 });
 test('order totals are computed on the server, validated, and retries do not duplicate',async()=>{
@@ -21,21 +21,21 @@ test('order totals are computed on the server, validated, and retries do not dup
  assert.equal((await api('/api/starlight-order',{...body,phone:'123'})).status,400);
  assert.equal((await api('/api/starlight-order',{...body,disclosureVersion:'old'})).status,400);
  const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);
- assert.equal(ok.data.total,1149+295+495);assert.equal(ok.data.deposit,250);assert.equal(ok.data.balance,1939-250);assert.equal(ok.data.checkoutUrl,'');
+ assert.equal(ok.data.total,1550+295+495);assert.equal(ok.data.deposit,250);assert.equal(ok.data.balance,2340-250);assert.equal(ok.data.checkoutUrl,'');
  assert.equal((await api('/api/starlight-order',body)).status,200);
  const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
- const o=db.prepare('SELECT * FROM starlight_orders WHERE id=?').get(body.id);assert.equal(o.total,1939);assert.equal(o.stars,750);assert.equal(o.phone,'6195550134');assert.equal(o.status,'awaiting-deposit');
+ const o=db.prepare('SELECT * FROM starlight_orders WHERE id=?').get(body.id);assert.equal(o.total,2340);assert.equal(o.stars,750);assert.equal(o.phone,'6195550134');assert.equal(o.status,'awaiting-deposit');
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'telegram-starlight-%'").get().n,1);assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'newsletter-starlight-%'").get().n,0);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM subscribers WHERE email=?').get('antoni@example.test').n,0);
- const t=JSON.parse(db.prepare("SELECT payload FROM outbox WHERE id=?").get('telegram-starlight-'+body.id).payload);assert.equal(t.total,'$1,939');assert.match(t.addons,/Shooting stars \$295/);
- const {telegramText}=await import('../server/telegram.mjs');assert.match(telegramText(t),/Balance at drop-off: \$1,689/);
+ const t=JSON.parse(db.prepare("SELECT payload FROM outbox WHERE id=?").get('telegram-starlight-'+body.id).payload);assert.equal(t.total,'$2,340');assert.match(t.addons,/Shooting stars \$295/);
+ const {telegramText}=await import('../server/telegram.mjs');assert.match(telegramText(t),/Balance at drop-off: \$2,090/);
 });
 test('member code takes a real discount off list, server-side only',async()=>{
  assert.equal((await api('/api/starlight-code?code=nope')).status,404);
- const c=await api('/api/starlight-code?code=insider100');assert.equal(c.status,200);assert.equal(c.data.off,100);
+ const c=await api('/api/starlight-code?code=insider');assert.equal(c.status,200);assert.equal(c.data.prices[750],1225);
  assert.equal((await api('/api/starlight')).data.codes,undefined);
- const body={id:randomUUID(),stars:1000,addons:[],year:2025,make:'Nissan',model:'Altima',date:tomorrow(),time:'Midday',firstName:'Angelina',email:'ang@example.test',phone:'6265550134',code:'INSIDER100',disclosureVersion:'starlit-v1'};
+ const body={id:randomUUID(),stars:1000,addons:[],year:2025,make:'Nissan',model:'Altima',date:tomorrow(),time:'Midday',firstName:'Angelina',email:'ang@example.test',phone:'6265550134',code:'INSIDER',disclosureVersion:'starlit-v1'};
  assert.equal((await api('/api/starlight-order',{...body,code:'FAKE'})).status,400);
- const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);assert.equal(ok.data.total,1299);assert.equal(ok.data.balance,1049);
+ const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);assert.equal(ok.data.total,1499);assert.equal(ok.data.balance,1249);
  const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
- assert.deepEqual({...db.prepare('SELECT code,discount,list_total FROM starlight_order_codes WHERE order_id=?').get(body.id)},{code:'INSIDER100',discount:100,list_total:1399});
+ assert.deepEqual({...db.prepare('SELECT code,discount,list_total FROM starlight_order_codes WHERE order_id=?').get(body.id)},{code:'INSIDER',discount:396,list_total:1895});
 });
