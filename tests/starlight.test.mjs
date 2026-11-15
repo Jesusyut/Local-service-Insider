@@ -5,15 +5,15 @@ before(async()=>{dir=await mkdtemp(join(tmpdir(),'starlight-test-'));proc=spawn(
 after(async()=>{if(proc&&proc.exitCode===null){await new Promise(r=>{proc.once('exit',r);proc.kill();});}await rm(dir,{recursive:true,force:true,maxRetries:5,retryDelay:100});});
 const tomorrow=()=>{const d=new Date(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles'}).format(new Date())+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);};
 test('starlight store page and config are served',async()=>{
- const r=await fetch(base+'/starlight');assert.equal(r.status,200);const html=await r.text();
- assert.match(html,/Starlight headliners, installed by a top-rated local pro\./);assert.match(html,/\/starlight\.js/);
+ const r=await fetch(base+'/starlit');assert.equal(r.status,200);const html=await r.text();
+ assert.match(html,/Starlit/);assert.doesNotMatch(html,/Local Car Care|tracking\.js/);assert.match(html,/noindex/);assert.match(html,/\/starlight\.js/);
  assert.equal((await fetch(base+'/starlight.js')).headers.get('content-type'),'text/javascript');
  const c=(await api('/api/starlight')).data;
  assert.deepEqual(c.tiers.map(t=>[t.stars,t.price]),[[500,849],[600,949],[750,1149],[850,1249],[1000,1399]]);
  assert.equal(c.deposit,250);assert.equal(c.minDate,tomorrow());assert.equal(c.onlineDeposit,false);assert.equal(c.phone,null);
 });
 test('order totals are computed on the server, validated, and retries do not duplicate',async()=>{
- const body={id:randomUUID(),stars:750,addons:['shooting','suede','shooting'],year:2026,make:'Kia',model:'K5 GT Line',date:tomorrow(),time:'Morning',firstName:'Antoni',email:'antoni@example.test',phone:'(619) 555-0134',notes:'',total:1,disclosureVersion:'starlight-v1',source:{utm_campaign:'starlight-luxury'}};
+ const body={id:randomUUID(),stars:750,addons:['shooting','suede','shooting'],year:2026,make:'Kia',model:'K5 GT Line',date:tomorrow(),time:'Morning',firstName:'Antoni',email:'antoni@example.test',phone:'(619) 555-0134',notes:'',total:1,disclosureVersion:'starlit-v1',source:{utm_campaign:'starlight-luxury'}};
  assert.equal((await api('/api/starlight-order',{...body,stars:700})).status,400);
  assert.equal((await api('/api/starlight-order',{...body,addons:['free']})).status,400);
  assert.equal((await api('/api/starlight-order',{...body,date:'2020-01-01'})).status,400);
@@ -25,7 +25,7 @@ test('order totals are computed on the server, validated, and retries do not dup
  assert.equal((await api('/api/starlight-order',body)).status,200);
  const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
  const o=db.prepare('SELECT * FROM starlight_orders WHERE id=?').get(body.id);assert.equal(o.total,1939);assert.equal(o.stars,750);assert.equal(o.phone,'6195550134');assert.equal(o.status,'awaiting-deposit');
- assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'telegram-starlight-%'").get().n,1);
+ assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'telegram-starlight-%'").get().n,1);assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'newsletter-starlight-%'").get().n,0);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM subscribers WHERE email=?').get('antoni@example.test').n,0);
  const t=JSON.parse(db.prepare("SELECT payload FROM outbox WHERE id=?").get('telegram-starlight-'+body.id).payload);assert.equal(t.total,'$1,939');assert.match(t.addons,/Shooting stars \$295/);
  const {telegramText}=await import('../server/telegram.mjs');assert.match(telegramText(t),/Balance at drop-off: \$1,689/);
 });

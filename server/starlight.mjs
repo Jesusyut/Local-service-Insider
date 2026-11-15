@@ -1,9 +1,8 @@
-import {randomUUID} from 'node:crypto';
 import {query,transaction} from './db.mjs';
 import {meta,hash} from './integrations.mjs';
 import {localToday} from './intake.mjs';
 
-// /starlight — online store: pick a star count, add-ons, a date, then pay a deposit.
+// Starlit Interiors (separate brand, not linked from Local Car Care) — quote + checkout: pick a star count, add-ons, a date, then pay a deposit.
 // Prices live here only; the browser shows them but the server computes every total.
 export const starlightCatalog={
  tiers:[
@@ -19,8 +18,8 @@ export const starlightCatalog={
   {id:'suede',name:'Suede headliner',price:495,note:'New suede-wrapped liner behind the stars.'}],
  times:['Morning','Midday','Afternoon'],
  deposit:250,
- consent:'We’ll email and text you about this booking, plus occasional local car care deals. Unsubscribe anytime.',
- disclosureVersion:'starlight-v1'
+ consent:'We’ll only text and email you about this booking.',
+ disclosureVersion:'starlit-v1'
 };
 const now=()=>new Date().toISOString();
 const text=(v,n=100)=>String(v??'').trim().slice(0,n);
@@ -69,11 +68,9 @@ export async function placeStarlightOrder(b,{turnstile}){
   // The browser-generated ID makes a retried submit a no-op.
   if((await q('SELECT id FROM starlight_orders WHERE id=$1',[id])).rows[0])return;
   const stamp=now();
-  await q('INSERT INTO subscribers(id,first_name,email,zip,consent_at,consent_text,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(email) DO UPDATE SET first_name=excluded.first_name,consent_at=excluded.consent_at,consent_text=excluded.consent_text',[randomUUID(),name,email,'',stamp,starlightCatalog.consent,JSON.stringify(source),stamp]);
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
   await q('INSERT INTO starlight_orders(id,first_name,email,phone,year,make,model,stars,addons,total,deposit,desired_date,time_window,notes,status,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)',[id,name,email,phone,year,make,model,tier.stars,JSON.stringify(addons.map(a=>a.id)),total,deposit,date,time,notes,'awaiting-deposit',JSON.stringify(source),stamp]);
-  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlight order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total),balance:money(balance),notes});
-  await job(q,'newsletter-starlight-'+id,'newsletter',{email,firstName:name,service:'Starlight headliner',custom_fields:[{name:'service',value:'Starlight headliner'},{name:'starlight_stars',value:String(tier.stars)},{name:'starlight_total',value:String(total)},{name:'starlight_date',value:date}],subscription_tags:['starlight','starlight-order','deals']});
+  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total),balance:money(balance),notes});
   fresh=true;
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{em:[hash(email)],ph:[hash(phone.length===10?'1'+phone:phone)]});

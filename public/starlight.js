@@ -1,4 +1,4 @@
-// /starlight — store page: to-scale star preview, package + extras, install day, $250 deposit.
+// Starlit Interiors — separate-brand quote + checkout page sent to leads 1:1: to-scale star preview, package + extras, install day, $250 deposit.
 const $=s=>document.querySelector(s),params=new URLSearchParams(location.search);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>'$'+Number(v).toLocaleString('en-US');
@@ -65,16 +65,28 @@ function render(){
  $('#bar-total').textContent=money(total);$('#bar-sum').textContent=tier.stars.toLocaleString('en-US')+' stars'+(extras.length?` + ${extras.length} extra${extras.length>1?'s':''}`:'')+` · ${money(cfg.deposit)} today`;
  redraw();
 }
+// Personal links: ?name=Antoni&email=..&phone=..&year=2026&make=Kia&model=K5&stars=750&addons=shooting,suede&date=2026-11-18&time=Morning
+function personalize(){
+ const p=k=>(params.get(k)||'').trim().slice(0,120),name=p('name');
+ for(const [k,id] of [['name','firstName'],['email','email'],['phone','phone'],['year','year'],['make','make'],['model','model'],['date','date']])if(p(k))$('#'+id).value=p(k);
+ if($('#date').value&&$('#date').value<cfg.minDate)$('#date').value='';
+ for(const a of p('addons').split(','))if(cfg.addons.some(x=>x.id===a))state.addons.add(a);
+ const car=[p('year'),p('make'),p('model')].filter(Boolean).join(' ');
+ if(name){$('#eyebrow').textContent='Prepared for '+name+(car?' · '+car:'');$('#hero').textContent=name+', here’s your night sky.';$('#lede').textContent=`This is the package we talked about, drawn to scale. Change anything you like, then lock your install day with a ${money(cfg.deposit)} deposit.`;document.title='Your starlight quote · Starlit Interiors';}
+}
 function build(){
  const preset=Number(params.get('stars'));if(cfg.tiers.some(t=>t.stars===preset))state.stars=preset;shown=state.stars;
+ personalize();
  $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'?'<em>Most popular</em>':''}</span><span class="p">${money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
  document.querySelectorAll('.sw').forEach(b=>{b.style.setProperty('--c',SW.find(s=>s.id===b.dataset.c).c);});
  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{state.color=b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render();});
  $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
+ document.querySelectorAll('.addon input').forEach(i=>{i.checked=state.addons.has(i.value);});
  document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
  $('#times').innerHTML=cfg.times.map(t=>`<button type="button" class="chip" aria-pressed="false" data-t="${t}">${t}</button>`).join('');
+ const pt=params.get('time');if(cfg.times.includes(pt)){state.time=pt;document.querySelectorAll('#times .chip').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.t===pt)));}
  document.querySelectorAll('#times .chip').forEach(b=>b.onclick=()=>{state.time=b.dataset.t;document.querySelectorAll('#times .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
  $('#date').min=cfg.minDate;$('#year').placeholder=String(new Date().getFullYear());
  $('#consent').textContent=cfg.consent;
@@ -94,7 +106,7 @@ new IntersectionObserver(e=>$('#buybar').hidden=e[0].isIntersecting).observe($('
 /* ---------- Checkout ---------- */
 const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 function showError(m){const e=$('#err');e.hidden=false;e.textContent=m;e.scrollIntoView({behavior:'smooth',block:'center'});}
-function finish(html){$('#buybar').hidden=true;$('#app').innerHTML=`<header class="store-head"><p class="wordmark">Local Car Care</p></header><section class="done">${html}</section>`;window.scrollTo({top:0});}
+function finish(html){$('#buybar').hidden=true;$('#app').innerHTML=`<header class="store-head"><p class="wordmark brand">Starlit<span>Interiors</span></p></header><section class="done">${html}</section>`;window.scrollTo({top:0});}
 function receiptHtml(o){return `<div class="receipt"><div class="receipt-head"><span>Your order</span><span>${money(o.total)}</span></div><div class="receipt-rows">${o.rows.map(([a,b])=>`<div class="rrow"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}</div><div class="due"><div><small>Deposit</small><strong>${money(o.deposit)}</strong></div><div><small>At drop-off</small><strong>${money(o.balance)}</strong></div></div></div>`;}
 $('#book').onsubmit=async e=>{
  e.preventDefault();$('#err').hidden=true;
@@ -121,4 +133,4 @@ function paidView(){
  if(o&&!store.get('starlight-paid-'+o.id)){pixel('Purchase',{value:o.deposit,currency:'USD',content_name:'Starlight deposit'},'paid-'+o.id);store.set('starlight-paid-'+o.id,true);}
  finish(`<h1>Deposit received. Your day is locked${o?', '+esc(o.name):''}.</h1><p class="lede">${o?`See you ${esc(dayName(o.date))} (${esc(o.time.toLowerCase())}). `:''}We’ll text you the shop address and a reminder the day before. The balance is due at drop-off, before work starts.</p>${o?receiptHtml(o):''}<p class="fine">Questions? ${cfg?.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to your confirmation email.'}</p>`);
 }
-api('/api/starlight').then(c=>{cfg=c;window.configureMetaPixel?.(c.metaPixelId);if(params.get('paid')==='1')return paidView();build();if(!reduce)requestAnimationFrame(loop);}).catch(()=>showError('The store is loading slowly. Refresh in a moment.'));
+api('/api/starlight').then(c=>{cfg=c;if(params.get('paid')==='1')return paidView();build();if(!reduce)requestAnimationFrame(loop);}).catch(()=>showError('The store is loading slowly. Refresh in a moment.'));
