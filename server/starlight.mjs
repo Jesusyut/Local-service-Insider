@@ -11,9 +11,9 @@ export const starlightCatalog={
   {stars:600,price:1350,tag:''},
   {stars:750,price:1550,tag:'Most popular'},
   {stars:850,price:1695,tag:''},
-  {stars:1000,price:1895,tag:'Full sky'}],
+  {stars:1000,price:1895,tag:'Best long-term'}],
  addons:[
-  {id:'shooting',name:'Shooting stars',price:295,note:'Moving meteor streaks across the sky.'},
+  {id:'shooting',name:'Shooting stars',price:295,note:'Moving meteor streaks across the sky.',tag:'Top add-on'},
   {id:'dual',name:'Dual color',price:295,note:'Two star colors at once, set from the app.'},
   {id:'ambient',name:'Ambient trim lighting',price:495,note:'Matching light lines in the doors and dash.'},
   {id:'suede',name:'Suede headliner',price:495,note:'New suede-wrapped liner behind the stars.'}],

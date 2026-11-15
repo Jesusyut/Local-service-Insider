@@ -80,12 +80,12 @@ function build(){
  const preset=Number(params.get('stars'));if(cfg.tiers.some(t=>t.stars===preset))state.stars=preset;shown=state.stars;
  personalize();
  if(params.get('code'))applyCode(params.get('code'),true);
- $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'?'<em>Most popular</em>':''}</span><span class="p">${money(t.price)}</span></button>`).join('');
+ $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'||t.tag==='Best long-term'?`<em>${esc(t.tag)}</em>`:''}</span><span class="p">${money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
  document.querySelectorAll('.sw').forEach(b=>{b.style.setProperty('--c',SW.find(s=>s.id===b.dataset.c).c);});
  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{state.color=b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render();});
- $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
+ $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}${a.tag?` <em class="atag">${esc(a.tag)}</em>`:''}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
  document.querySelectorAll('.addon input').forEach(i=>{i.checked=state.addons.has(i.value);});
  document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
  $('#times').innerHTML=cfg.times.map(t=>`<button type="button" class="chip" aria-pressed="false" data-t="${t}">${t}</button>`).join('');

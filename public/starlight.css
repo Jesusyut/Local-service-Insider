@@ -111,3 +111,4 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 .shot.tall3{aspect-ratio:720/1094}
 .shot.tall4{aspect-ratio:720/954}
 .shot.tall5{aspect-ratio:720/1208}
+.addon b .atag{display:inline-block;font-style:normal;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-left:6px;padding:2px 8px;border-radius:20px;background:#FFD9D9;color:#7A1424;border:1.5px solid #4C8DFF;vertical-align:1px;white-space:nowrap}
