@@ -83,4 +83,6 @@ test('starlit gallery media is served, video supports byte ranges',async()=>{
  const part=await fetch(base+'/media/starlit-install.mp4',{headers:{Range:'bytes=0-99'}});assert.equal(part.status,206);assert.equal((await part.arrayBuffer()).byteLength,100);assert.match(part.headers.get('content-range'),/^bytes 0-99\//);
  assert.equal((await fetch(base+'/media/starlit-1.jpg')).headers.get('content-type'),'image/jpeg');
  assert.equal((await fetch(base+'/media/other.jpg')).status,404);
+ for(const f of ['starlit-install-2.mp4','starlit-install-3.mp4','starlit-install-3-poster.jpg'])assert.equal((await fetch(base+'/media/'+f)).status,200);
+ assert.equal((await fetch(base+'/media/starlit-3.jpg')).status,404);
 });
