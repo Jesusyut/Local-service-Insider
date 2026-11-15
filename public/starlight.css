@@ -96,3 +96,6 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 .code-box input{flex:1;min-width:0;min-height:44px;padding:0 12px;border:1.5px solid var(--field);border-radius:8px;background:var(--ground);color:var(--ink);text-transform:uppercase;font:500 16px var(--body)}
 .code-box .chip{min-height:44px}
 .tier em{white-space:nowrap;display:inline-block}
+#out{word-break:break-all;padding:8px 0;color:var(--ink-2)}
+.starlit .check{font-size:15px}
+.starlit select{color:var(--ink)}

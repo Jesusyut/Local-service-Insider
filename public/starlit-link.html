@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Quote link builder · Starlit</title>
+<link rel="stylesheet" href="/home.css">
+<link rel="stylesheet" href="/starlight.css">
+<script src="/starlit-link.js" type="module"></script>
+</head>
+<body class="starlit">
+<main class="store">
+<header class="store-head"><p class="wordmark brand">Starlit<span>Quote links</span></p></header>
+<form class="book" id="f" novalidate>
+<label class="field">First name<input id="name" autocomplete="off"></label>
+<div class="row"><label class="field">Year<input id="year" inputmode="numeric" maxlength="4"></label><label class="field">Make<input id="make"></label></div>
+<label class="field">Model<input id="model"></label>
+<div class="row-2"><label class="field">Phone <span class="opt">optional</span><input id="phone" type="tel"></label><label class="field">Email <span class="opt">optional</span><input id="email" type="email"></label></div>
+<fieldset><legend>Stars</legend><div class="chips" id="stars"></div></fieldset>
+<fieldset><legend>Extras</legend><div class="chips" id="addons"></div></fieldset>
+<div class="row-2"><label class="field">Install day <span class="opt">optional</span><input id="date" type="date"></label><label class="field">Time<select id="time"><option value="">Any</option><option>Morning</option><option>Midday</option><option>Afternoon</option></select></label></div>
+<label class="check"><input type="checkbox" id="code" checked> Apply Local Insider member price</label>
+<div class="receipt"><div class="receipt-head"><span>Their link</span><span id="price"></span></div><div class="receipt-rows"><p class="fine" id="out"></p></div></div>
+<div class="row-2"><button class="btn" type="button" id="copy">Copy link</button><a class="btn" id="open" target="_blank">Preview</a></div>
+<p class="fine" id="msg"></p>
+</form>
+</main>
+</body>
+</html>
