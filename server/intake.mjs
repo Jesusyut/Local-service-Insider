@@ -2,6 +2,7 @@ import {estimateNotes} from './seeds.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {query,transaction} from './db.mjs';
 import {services,types,copy,newsletterConsent} from './catalog.mjs';
+import {enrollStarlit} from './starlit-sequence.mjs';
 import {meta,hash} from './integrations.mjs';
 
 const now=()=>new Date().toISOString();
@@ -42,6 +43,7 @@ export async function captureIntake(b,{turnstile}){
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
   await job(q,'telegram-intake-'+id,'telegram',{intakeId:id,service:service.name,stage:'Contact captured'});
   await job(q,'newsletter-intake-'+id,'newsletter',{email,intakeId:id,service:service.name,custom_fields:[{name:'service',value:service.name}],subscription_tags:[service.id]});
+  if(service.id==='starlight')await enrollStarlit(q,{email,firstName:name,requestId:id});
   fresh=true;
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{em:[hash(email)],ph:[hash(phone.length===10?'1'+phone:phone)]});

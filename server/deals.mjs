@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {query,transaction} from './db.mjs';
 import {services,dealsConsent} from './catalog.mjs';
 import {meta,hash} from './integrations.mjs';
+import {enrollStarlit} from './starlit-sequence.mjs';
 
 // /deals — email-first signup for the local deals newsletter. No phone, no vehicle.
 const now=()=>new Date().toISOString();
@@ -25,6 +26,7 @@ export async function captureDeals(b,{turnstile}){
   await q('INSERT INTO subscribers(id,first_name,email,zip,consent_at,consent_text,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(email) DO UPDATE SET first_name=excluded.first_name,consent_at=excluded.consent_at,consent_text=excluded.consent_text',[randomUUID(),name,email,'',stamp,dealsConsent,JSON.stringify(source),stamp]);
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
   await q('INSERT INTO deals_signups(id,email,first_name,service_id,created_at) VALUES($1,$2,$3,$4,$5)',[id,email,name,service?.id||null,stamp]);
+  if(service?.id==='starlight')await enrollStarlit(q,{email,firstName:name});
   await job(q,'telegram-deals-'+id,'telegram',{id,stage:'Deals newsletter signup',firstName:name,email,service:service?.name});
   await job(q,'newsletter-deals-'+id,'newsletter',{email,firstName:name,...(service?{service:service.name,custom_fields:[{name:'service',value:service.name}],subscription_tags:[service.id,'deals']}:{subscription_tags:['deals']})});
   fresh=true;
@@ -43,6 +45,7 @@ export async function dealsInterest(b){
  await transaction(async q=>{
   await q('UPDATE deals_signups SET service_id=$1 WHERE id=$2',[service.id,id]);
   await job(q,'newsletter-deals-svc-'+id+'-'+service.id,'newsletter',{email:row.email,firstName:row.first_name,service:service.name,custom_fields:[{name:'service',value:service.name}],subscription_tags:[service.id,'deals']});
+  if(service.id==='starlight')await enrollStarlit(q,{email:row.email,firstName:row.first_name});
   await job(q,'telegram-deals-svc-'+id,'telegram',{id,stage:'Deals signup: in the market for',firstName:row.first_name,service:service.name});
  });
  return {service:service.name};

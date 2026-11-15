@@ -5,6 +5,7 @@ import {captureDeals,dealsInterest} from './deals.mjs';
 import {starlightConfig,placeStarlightOrder,findCode,stripeWebhook} from './starlight.mjs';
 import {ensureStarlitTemplate} from './brevo-template.mjs';
 import {starlitLink} from './starlit-links.mjs';
+import {tickStarlit,enrollStarlit} from './starlit-sequence.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -134,6 +135,12 @@ const server=http.createServer(async(req,res)=>{try{
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Local Car Care ready at http://localhost:${process.env.PORT||3000}`));
 // One-off sends: STARLIT_SEND="email|Name|$2,000;email2|Name2|$1,600" queues template STARLIT_TEMPLATE_ID once per email (outbox id dedupes across deploys).
 if(process.env.STARLIT_SEND&&process.env.STARLIT_TEMPLATE_ID)(async()=>{for(const entry of process.env.STARLIT_SEND.split(';')){const [email,name,high]=entry.split('|').map(x=>(x||'').trim());if(!/^\S+@\S+$/.test(email))continue;await enqueue('brevo-template',{templateId:Number(process.env.STARLIT_TEMPLATE_ID),email,name,params:{NAME:name,...(high?{HIGH:high}:{})},sender:{name:'Caesar at Local Car Care',email:process.env.BREVO_SENDER_EMAIL||'us@localserviceinsider.com'}},'starlit-send2-'+email.toLowerCase());}const {rows}=await query("SELECT * FROM outbox WHERE kind='brevo-template' AND status='pending' AND id LIKE 'starlit-send2-%'");for(const j of rows){try{await deliver(j);await query("UPDATE outbox SET status='sent',last_error=NULL WHERE id=$1",[j.id]);console.log('Starlit sent:',j.id);}catch(e){await query('UPDATE outbox SET attempts=attempts+1,last_error=$1 WHERE id=$2',[e.message,j.id]);console.error('Starlit send error:',j.id,e.message);}}})().catch(e=>console.error('Starlit send failed:',e.message));
+// Starlit sequence: check for due emails every 5 minutes. People in STARLIT_SEND already got the quote email, so they join at step 2.
+if(process.env.NODE_ENV!=='test'){
+ (async()=>{for(const entry of (process.env.STARLIT_SEND||'').split(';')){const [email,name]=entry.split('|').map(x=>(x||'').trim());if(!/^\S+@\S+$/.test(email))continue;const lead=(await query('SELECT i.id FROM intake_leads i JOIN subscribers s ON s.id=i.subscriber_id WHERE lower(s.email)=$1 ORDER BY i.created_at DESC LIMIT 1',[email.toLowerCase()])).rows[0];await enrollStarlit(query,{email,firstName:name,requestId:lead?.id||null,fromStep:2,start:new Date(Date.parse('2026-11-15T02:37:00Z'))});}})().catch(e=>console.error('Starlit enroll failed:',e.message));
+ setTimeout(()=>tickStarlit().catch(e=>console.error('Starlit tick failed:',e.message)),20000);
+ setInterval(()=>tickStarlit().catch(e=>console.error('Starlit tick failed:',e.message)),300000);
+}
 if(process.env.NODE_ENV!=='test')ensureStarlitTemplate().then(r=>console.log('Brevo Starlit template:',r)).catch(e=>console.error('Brevo Starlit template failed:',e.message));
 if(process.env.MAINTENANCE_MODE!=='true')setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();
 process.on('SIGTERM',()=>server.close(()=>process.exit(0)));

@@ -70,3 +70,10 @@ test('short /q/ link redirects to the personal Starlit page',async()=>{
  const r=await fetch(base+'/q/00000000',{redirect:'manual'});assert.equal(r.status,302);assert.equal(r.headers.get('location'),'/starlit?code=INSIDER');
  assert.equal((await fetch(base+'/q/xyz',{redirect:'manual'})).status,404);
 });
+test('starlit sequence: quiet hours, schedule, stop on booking, one send per step',async()=>{
+ const {sendTime,steps}=await import('../server/starlit-sequence.mjs');
+ assert.deepEqual(steps().map(s=>[s.templateId,s.minutes]),[[15,90],[16,1440],[17,4320],[18,7200],[19,11520]]);
+ assert.equal(sendTime(new Date('2026-11-15T20:00:00Z')).toISOString(),'2026-11-15T20:00:00.000Z'); // noon PT stays
+ assert.equal(sendTime(new Date('2026-11-15T06:30:00Z')).toISOString(),'2026-11-15T17:00:00.000Z'); // 10:30pm PT -> 9am PT
+ assert.equal(sendTime(new Date('2026-11-15T13:00:00Z')).toISOString(),'2026-11-15T17:00:00.000Z'); // 5am PT -> 9am PT
+});
