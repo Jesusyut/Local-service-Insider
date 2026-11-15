@@ -115,7 +115,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.method!=='GET'&&req.method!=='HEAD')fail('Not found',404);
  if(path==='/images/google-stars.png'||/^\/fonts\/barlow-(latin-(400|500|600)|semi-condensed-latin-(600|700))-normal\.woff2$/.test(path)){const bytes=await readFile(new URL('../public'+path,import.meta.url));res.writeHead(200,{'Content-Type':path.endsWith('.png')?'image/png':'font/woff2','Cache-Control':'public, max-age=604800'});return res.end(req.method==='HEAD'?undefined:bytes);}
  // Starlit gallery media. Video supports byte ranges (iPhone Safari needs them to play).
- const media=path.match(/^\/media\/(starlit-2\.jpg|starlit-install(?:-[234])?-poster\.jpg|starlit-install(?:-[234])?\.mp4)$/);
+ const media=path.match(/^\/media\/(starlit-install(?:-[2-5])?-poster\.jpg|starlit-install(?:-[2-5])?\.mp4)$/);
  if(media){const bytes=await readFile(new URL('../public/media/'+media[1],import.meta.url)),type=media[1].endsWith('.mp4')?'video/mp4':'image/jpeg',head={'Content-Type':type,'Cache-Control':'public, max-age=86400','Accept-Ranges':'bytes'};
   const range=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range||'');
   if(range&&type==='video/mp4'){let start=range[1]===''?bytes.length-Number(range[2]):Number(range[1]),end=range[1]!==''&&range[2]!==''?Number(range[2]):bytes.length-1;end=Math.min(end,bytes.length-1);

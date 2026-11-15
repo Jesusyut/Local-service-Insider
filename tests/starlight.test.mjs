@@ -81,8 +81,8 @@ test('starlit gallery media is served, video supports byte ranges',async()=>{
  const html=await (await fetch(base+'/starlit')).text();assert.match(html,/\/media\/starlit-install\.mp4/);
  const full=await fetch(base+'/media/starlit-install.mp4');assert.equal(full.status,200);assert.equal(full.headers.get('content-type'),'video/mp4');
  const part=await fetch(base+'/media/starlit-install.mp4',{headers:{Range:'bytes=0-99'}});assert.equal(part.status,206);assert.equal((await part.arrayBuffer()).byteLength,100);assert.match(part.headers.get('content-range'),/^bytes 0-99\//);
- assert.equal((await fetch(base+'/media/starlit-2.jpg')).headers.get('content-type'),'image/jpeg');
+ assert.equal((await fetch(base+'/media/starlit-install-5-poster.jpg')).headers.get('content-type'),'image/jpeg');
  assert.equal((await fetch(base+'/media/other.jpg')).status,404);
- for(const f of ['starlit-install-4.mp4','starlit-install-2.mp4','starlit-install-3.mp4','starlit-install-3-poster.jpg'])assert.equal((await fetch(base+'/media/'+f)).status,200);
+ for(const f of ['starlit-install-5.mp4','starlit-install-4.mp4','starlit-install-2.mp4','starlit-install-3.mp4','starlit-install-3-poster.jpg'])assert.equal((await fetch(base+'/media/'+f)).status,200);
  assert.equal((await fetch(base+'/media/starlit-3.jpg')).status,404);assert.equal((await fetch(base+'/media/starlit-1.jpg')).status,404);
 });
