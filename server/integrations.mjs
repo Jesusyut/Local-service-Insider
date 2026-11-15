@@ -34,7 +34,7 @@ export async function deliver(job){const p=JSON.parse(job.payload);
  }else if(job.kind==='meta'){
   if(!process.env.META_ACCESS_TOKEN||!process.env.META_PIXEL_ID)throw new Error('Meta is not configured');
   await post(`https://graph.facebook.com/${process.env.META_API_VERSION||'v25.0'}/${process.env.META_PIXEL_ID}/events?access_token=${encodeURIComponent(process.env.META_ACCESS_TOKEN)}`,null,{data:[p]});
- }
+ }else throw new Error('Unknown outbox job kind: '+job.kind);
 }
 let busy=false;
 export async function drain(){if(busy)return;busy=true;try{const {rows}=await query("SELECT * FROM outbox WHERE status='pending' AND attempts<6 ORDER BY created_at LIMIT 15");for(const j of rows){try{await deliver(j);await query("UPDATE outbox SET status='sent',last_error=NULL WHERE id=$1",[j.id]);}catch(e){await query('UPDATE outbox SET attempts=attempts+1,last_error=$1 WHERE id=$2',[e.message,j.id]);}}}finally{busy=false;}}
