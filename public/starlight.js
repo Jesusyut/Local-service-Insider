@@ -115,6 +115,14 @@ async function applyCode(c,quiet){
 $('#code-open').onclick=()=>{$('#code-box').hidden=false;$('#code-open').hidden=true;$('#code').focus();};
 $('#code-apply').onclick=()=>applyCode($('#code').value);
 $('#code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyCode($('#code').value);}};
+/* ---------- Gallery: arrows, swipe hint, edge fade ---------- */
+(()=>{const reel=$('#reel'),frame=$('#reel-frame');if(!reel)return;
+ const step=()=>Math.max(200,reel.clientWidth*.8);
+ $('#reel-next').onclick=()=>reel.scrollBy({left:step(),behavior:'smooth'});
+ $('#reel-prev').onclick=()=>reel.scrollBy({left:-step(),behavior:'smooth'});
+ const update=()=>{const max=reel.scrollWidth-reel.clientWidth-4;frame.classList.toggle('at-start',reel.scrollLeft<=4);frame.classList.toggle('at-end',reel.scrollLeft>=max);$('#reel-prev').disabled=reel.scrollLeft<=4;$('#reel-next').disabled=reel.scrollLeft>=max;if(reel.scrollLeft>30)frame.classList.add('seen');};
+ reel.addEventListener('scroll',update,{passive:true});new ResizeObserver(update).observe(reel);update();
+})();
 /* ---------- Checkout ---------- */
 const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 function showError(m){const e=$('#err');e.hidden=false;e.textContent=m;e.scrollIntoView({behavior:'smooth',block:'center'});}
