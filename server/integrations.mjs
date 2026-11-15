@@ -17,6 +17,11 @@ export async function deliver(job){const p=JSON.parse(job.payload);
   const field=name=>p.custom_fields?.find(f=>f.name===name)?.value;
   const report=intake?.report?JSON.parse(intake.report):null;
   await syncBrevoContact({email:p.email,firstName:subscriber?.first_name||p.firstName,phone:intake?.phone||p.phone,service:report?.service||p.service||field('service'),serviceId:intake?.service_id||p.subscription_tags?.[0],stage:quote?'quote_requested':report?'estimate_completed':'contact_captured',year:intake?.vehicle_year,make:intake?.make,model:intake?.model,vehicle:intake?undefined:field('vehicle'),desiredDate:intake?.desired_date,timeWindow:quote?.preferred_time,range:report?.range,requestId:intake?.id,capturedAt:intake?.created_at||subscriber?.consent_at,source:JSON.parse(intake?.source||subscriber?.source||'{}')});
+ }else if(job.kind==='brevo-template'){
+  // One Brevo transactional template to one contact (contact.* attributes + params personalize it).
+  if(!process.env.BREVO_API_KEY)throw new Error('Brevo is not configured');
+  const r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':process.env.BREVO_API_KEY,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({templateId:p.templateId,to:[{email:p.email,name:p.name}],params:p.params,...(p.sender?{sender:p.sender}:{}),tags:['starlit']}),signal:AbortSignal.timeout(15000)});
+  if(!r.ok)throw new Error('Brevo send HTTP '+r.status);
  }else if(job.kind==='telegram'){
   let lead=p;
   if(p.intakeId){
