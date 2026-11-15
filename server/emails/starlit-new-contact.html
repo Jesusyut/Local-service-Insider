@@ -1,0 +1,31 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your night sky</title></head>
+<body style="margin:0;background:#F2F3F1;font-family:Helvetica,Arial,sans-serif;color:#1E2A33">
+<div style="display:none;max-height:0;overflow:hidden">750 stars installed for $1,225 with your Local Insider price. See it drawn to scale.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F2F3F1"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:12px">
+<tr><td style="padding:28px 28px 8px;font-size:17px;line-height:1.55">
+<p style="margin:0 0 16px">Hi {{ contact.FIRSTNAME | default : 'there' }},</p>
+<p style="margin:0 0 16px">{% if contact.LPC_EST_HIGH_TEXT %}Your price check showed starlight headliners going as high as {{ contact.LPC_EST_HIGH_TEXT }} around San Diego.{% else %}Starlight headliners around San Diego get quoted all over the map, and most land on the high side.{% endif %}</p>
+<p style="margin:0 0 16px">One 5-star installer gave Local Insider members a different number:</p>
+</td></tr>
+<tr><td style="padding:0 28px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #1E2A33;border-radius:10px">
+<tr><td style="padding:14px 18px;font-size:15px;color:#55626C">750 stars, installed</td><td align="right" style="padding:14px 18px;font-size:15px;color:#55626C;text-decoration:line-through">Regular $1,550</td></tr>
+<tr><td style="padding:0 18px 16px;font-size:15px;font-weight:bold">Local Insider price</td><td align="right" style="padding:0 18px 16px;font-size:30px;font-weight:bold">$1,225</td></tr>
+</table></td></tr>
+<tr><td style="padding:22px 28px 0;font-size:17px;line-height:1.55">
+<p style="margin:0 0 16px">With stars, the number <i>is</i> the look. So we drew yours to scale. Tap between 750 and 1,000 and watch the sky fill in. Turn on shooting stars and watch them streak across.</p>
+</td></tr>
+<tr><td style="padding:0 28px"><a href="{{ contact.LPC_STARLIT_URL | default : 'https://localserviceinsider.com/starlit?code=INSIDER' }}"><img src="https://localserviceinsider.com/images/starlit-compare.jpg" width="504" alt="750 stars vs 1,000 stars on the same roof, drawn to scale" style="display:block;width:100%;height:auto;border-radius:10px;border:0"></a></td></tr>
+<tr><td align="center" style="padding:22px 28px 6px">
+<a href="{{ contact.LPC_STARLIT_URL | default : 'https://localserviceinsider.com/starlit?code=INSIDER' }}" style="display:inline-block;background:#1E2A33;color:#FFFFFF;text-decoration:none;font-weight:bold;font-size:18px;padding:16px 30px;border-radius:10px">See your night sky &rarr;</a>
+</td></tr>
+<tr><td style="padding:14px 28px 28px;font-size:16px;line-height:1.55">
+<p style="margin:0 0 16px">{% if contact.LPC_VEHICLE %}Your {{ contact.LPC_VEHICLE }} and member price are already filled in.{% else %}Your member price is already applied.{% endif %} 1,000+ colors, music mode, app and remote, no drilling, done in a day. $250 holds your install day.</p>
+<p style="margin:0 0 16px">Questions? Just reply to this email.</p>
+<p style="margin:0">Caesar<br>Local Car Care</p>
+</td></tr>
+</table>
+</td></tr></table>
+</body></html>

@@ -2,7 +2,8 @@ import http from 'node:http';
 import {renderSearchPage,seoPath,siteOrigin} from './seo.mjs';
 import {createSpamCheck} from './spam-check.mjs';
 import {captureDeals,dealsInterest} from './deals.mjs';
-import {starlightConfig,placeStarlightOrder,findCode} from './starlight.mjs';
+import {starlightConfig,placeStarlightOrder,findCode,stripeWebhook} from './starlight.mjs';
+import {ensureStarlitTemplate} from './brevo-template.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -67,7 +68,8 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
  if(path==='/api/starlight')return json(res,{...starlightConfig(),turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||''});
  if(path==='/api/starlight-code'){rate(req,'starlight-code',30);const c=findCode(url.searchParams.get('code'));return c?json(res,c):json(res,{error:'That code isn’t valid.'},404);}
- if(path==='/api/starlight-order'&&req.method==='POST'){rate(req,'starlight',10);const result=await placeStarlightOrder(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
+ if(path==='/api/stripe-webhook'&&req.method==='POST'){let raw='';for await(const part of req){raw+=part;if(raw.length>500000)fail('Request too large',413);}const result=await stripeWebhook(raw,req.headers['stripe-signature']);void drain().catch(()=>{});return json(res,result);}
+ if(path==='/api/starlight-order'&&req.method==='POST'){rate(req,'starlight',20);const result=await placeStarlightOrder(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/deals/interest'&&req.method==='POST'){rate(req,'deals-interest',30);const result=await dealsInterest(await body(req));void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/deals'&&req.method==='POST'){rate(req,'deals',15);const result=await captureDeals(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/intake'&&req.method==='POST'){rate(req,'intake',15);const result=await captureIntake(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
@@ -120,8 +122,9 @@ const server=http.createServer(async(req,res)=>{try{
  if(path==='/robots.txt'){res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: '+siteOrigin()+'/sitemap.xml\n');}
  if(path==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>'+siteOrigin()+seoPath+'</loc></url></urlset>');}
  if(path==='/pick'){res.writeHead(301,{Location:'/'+url.search,'Cache-Control':'no-cache'});return res.end();}
- const files={'/':'index.html','/deals':'deals.html','/deals.js':'deals.js','/starlit':'starlight.html','/starlit/link':'starlit-link.html','/starlit-link.js':'starlit-link.js','/starlight.js':'starlight.js','/starlight.css':'starlight.css','/insider.css':'insider.css','/insider.js':'insider.js','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
+ const files={'/':'index.html','/deals':'deals.html','/deals.js':'deals.js','/images/starlit-compare.jpg':'images/starlit-compare.jpg','/starlit':'starlight.html','/starlit/link':'starlit-link.html','/starlit-link.js':'starlit-link.js','/starlight.js':'starlight.js','/starlight.css':'starlight.css','/insider.css':'insider.css','/insider.js':'insider.js','/price-check':'price-check.html','/home.js':'home.js','/home.css':'home.css','/app.js':'app.js','/intake.js':'intake.js','/tracking.js':'tracking.js','/style.css':'style.css','/campaign.css':'campaign.css','/admin':'admin.html','/admin.js':'admin.js','/privacy':'privacy.html','/terms':'terms.html'};const file=files[path];if(!file)fail('Not found',404);const data=await readFile(new URL('../public/'+file,import.meta.url));res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.jpg')?'image/jpeg':'text/html','Cache-Control':file.endsWith('.jpg')?'public, max-age=86400':'no-cache'});res.end(req.method==='HEAD'?undefined:data);
  }catch(e){if(!e.status)console.error('Request failed:',e.code||e.name);json(res,{error:e.status?e.message:'Something went wrong. Please try again.'},e.status||500);}});
 server.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log(`Local Car Care ready at http://localhost:${process.env.PORT||3000}`));
+if(process.env.NODE_ENV!=='test')ensureStarlitTemplate().then(r=>console.log('Brevo Starlit template:',r)).catch(e=>console.error('Brevo Starlit template failed:',e.message));
 if(process.env.MAINTENANCE_MODE!=='true')setInterval(()=>void drain().catch(()=>console.error('Delivery queue error')),60000).unref();
 process.on('SIGTERM',()=>server.close(()=>process.exit(0)));

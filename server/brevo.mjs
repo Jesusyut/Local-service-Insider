@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
+import {starlitLink,priceText} from './starlit-links.mjs';
 
-export const brevoAttributes={FIRSTNAME:'text',LPC_PHONE:'text',LPC_SERVICE:'text',LPC_SERVICE_ID:'text',LPC_STAGE:'text',LPC_VEHICLE:'text',LPC_YEAR:'float',LPC_MAKE:'text',LPC_MODEL:'text',LPC_DESIRED_DATE:'date',LPC_TIME_WINDOW:'text',LPC_CAMPAIGN:'text',LPC_REQUEST_ID:'text',LPC_CAPTURED_AT:'text',LPC_ESTIMATE_LOW:'float',LPC_ESTIMATE_TYPICAL:'float',LPC_ESTIMATE_HIGH:'float'};
+export const brevoAttributes={FIRSTNAME:'text',LPC_PHONE:'text',LPC_SERVICE:'text',LPC_SERVICE_ID:'text',LPC_STAGE:'text',LPC_VEHICLE:'text',LPC_YEAR:'float',LPC_MAKE:'text',LPC_MODEL:'text',LPC_DESIRED_DATE:'date',LPC_TIME_WINDOW:'text',LPC_CAMPAIGN:'text',LPC_REQUEST_ID:'text',LPC_CAPTURED_AT:'text',LPC_ESTIMATE_LOW:'float',LPC_ESTIMATE_TYPICAL:'float',LPC_ESTIMATE_HIGH:'float',LPC_STARLIT_URL:'text',LPC_EST_HIGH_TEXT:'text',LPC_EST_TYPICAL_TEXT:'text'};
 const listId=value=>{const number=Number(value);if(!Number.isSafeInteger(number)||number<=0)throw Error('Set a valid Brevo list ID');return number;};
 export function brevoPayload(contact,{leadListId,completeListId}={}){
  const lists=[listId(leadListId)];if(['estimate_completed','quote_requested'].includes(contact.stage)&&completeListId)lists.push(listId(completeListId));
@@ -8,6 +9,8 @@ export function brevoPayload(contact,{leadListId,completeListId}={}){
  const attributes={FIRSTNAME:contact.firstName||'',LPC_SERVICE:contact.service||'',LPC_SERVICE_ID:contact.serviceId||'',LPC_STAGE:contact.stage||'contact_captured',LPC_CAMPAIGN:contact.source?.utm_campaign||'Direct'};
  if(phone)attributes.LPC_PHONE='+'+(phone.length===10?'1'+phone:phone);
  for(const [field,value]of Object.entries({LPC_VEHICLE:contact.vehicle||[contact.year,contact.make,contact.model].filter(Boolean).join(' '),LPC_YEAR:contact.year?Number(contact.year):undefined,LPC_MAKE:contact.make,LPC_MODEL:contact.model,LPC_DESIRED_DATE:contact.desiredDate,LPC_TIME_WINDOW:contact.timeWindow,LPC_REQUEST_ID:contact.requestId,LPC_CAPTURED_AT:contact.capturedAt,LPC_ESTIMATE_LOW:contact.range?.low,LPC_ESTIMATE_TYPICAL:contact.range?.typical,LPC_ESTIMATE_HIGH:contact.range?.high}))if(value!==undefined&&value!==null&&value!=='')attributes[field]=value;
+ // Starlight contacts get a personal checkout link + readable price text for the Brevo email.
+ if(contact.serviceId==='starlight'){attributes.LPC_STARLIT_URL=starlitLink(contact);const hi=priceText(contact.range?.high),ty=priceText(contact.range?.typical);if(hi)attributes.LPC_EST_HIGH_TEXT=hi;if(ty)attributes.LPC_EST_TYPICAL_TEXT=ty;}
  // Phone is a custom contact field, not enrollment in SMS marketing.
  // Never reset email/SMS blocklists or force-merge conflicting identifiers.
  return {email:contact.email,attributes,listIds:[...new Set(lists)],updateEnabled:true,forceMerge:false};

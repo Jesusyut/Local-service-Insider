@@ -1,3 +1,4 @@
+import {createHmac,timingSafeEqual} from 'node:crypto';
 import {query,transaction} from './db.mjs';
 import {meta,hash} from './integrations.mjs';
 import {localToday} from './intake.mjs';
@@ -49,9 +50,46 @@ export function priceOrder(stars,addonIds,codeText){
 export function starlightConfig(){
  const d=phoneDigits();
  const {codes,...pub}=starlightCatalog;
- return {...pub,minDate:tomorrow(),phone:prettyPhone(d)?{display:prettyPhone(d),tel:'+'+(d.length===10?'1'+d:d)}:null,onlineDeposit:Boolean(process.env.STARLIGHT_DEPOSIT_URL)};
+ return {...pub,onlineDeposit:Boolean(process.env.STRIPE_SECRET_KEY||process.env.STARLIGHT_DEPOSIT_URL),minDate:tomorrow(),phone:prettyPhone(d)?{display:prettyPhone(d),tel:'+'+(d.length===10?'1'+d:d)}:null};
 }
 
+const origin=()=>(process.env.STARLIGHT_PUBLIC_URL||((process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000').replace(/\/$/,'')+'/starlit'));
+// Stripe Checkout for the exact $250 deposit, tied to the order (no SDK; form-encoded API).
+async function stripeSession({id,email,stars,total,deposit},fetchImpl=fetch){
+ const f=new URLSearchParams({mode:'payment',customer_email:email,client_reference_id:id,'metadata[order_id]':id,
+  'line_items[0][quantity]':'1','line_items[0][price_data][currency]':'usd','line_items[0][price_data][unit_amount]':String(deposit*100),
+  'line_items[0][price_data][product_data][name]':`Install day deposit · ${stars.toLocaleString('en-US')} star headliner`,
+  'line_items[0][price_data][product_data][description]':`Non-refundable. Comes off your ${money(total)} total; ${money(total-deposit)} due at drop-off.`,
+  'payment_intent_data[metadata][order_id]':id,'payment_intent_data[description]':'Starlit Interiors deposit '+id,
+  'custom_text[submit][message]':'Your deposit is non-refundable. It holds your install day and comes off your total.',
+  success_url:origin()+'?paid=1&order='+id,cancel_url:origin()+'?order='+id});
+ const r=await fetchImpl('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:'Bearer '+process.env.STRIPE_SECRET_KEY,'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':'starlit-'+id},body:f,signal:AbortSignal.timeout(15000)});
+ const b=await r.json();if(!r.ok)throw Error('Stripe: '+(b.error?.message||r.status));return b;
+}
+export function verifyStripeSignature(raw,header,secret,now=Date.now()){
+ const parts=Object.fromEntries(String(header||'').split(',').map(x=>x.split('=')).filter(x=>x.length===2&&x[0]==='t').map(([k,v])=>[k,v]));
+ const sigs=String(header||'').split(',').filter(x=>x.startsWith('v1=')).map(x=>x.slice(3));
+ if(!parts.t||!sigs.length||Math.abs(now/1000-Number(parts.t))>300)return false;
+ const expected=Buffer.from(createHmac('sha256',secret).update(parts.t+'.'+raw).digest('hex'));
+ return sigs.some(s=>{const b=Buffer.from(s);return b.length===expected.length&&timingSafeEqual(b,expected);});
+}
+export async function stripeWebhook(raw,signature){
+ if(!process.env.STRIPE_WEBHOOK_SECRET||!verifyStripeSignature(raw,signature,process.env.STRIPE_WEBHOOK_SECRET))fail('Bad signature',400);
+ const event=JSON.parse(raw);if(event.type!=='checkout.session.completed'&&event.type!=='checkout.session.async_payment_succeeded')return {received:true};
+ const s=event.data.object,id=s.client_reference_id||s.metadata?.order_id;if(s.payment_status!=='paid'||!id)return {received:true};
+ const order=(await query('SELECT * FROM starlight_orders WHERE id=$1',[id])).rows[0];if(!order)return {received:true};
+ let fresh=false;
+ await transaction(async q=>{
+  if((await q('SELECT order_id FROM starlight_payments WHERE order_id=$1',[id])).rows[0])return;
+  const stamp=now();
+  await q('INSERT INTO starlight_payments(order_id,session_id,amount,paid_at) VALUES($1,$2,$3,$4)',[id,s.id,Math.round(Number(s.amount_total||0)/100),stamp]);
+  await q("UPDATE starlight_orders SET status='deposit-paid' WHERE id=$1",[id]);
+  await job(q,'telegram-starlight-paid-'+id,'telegram',{id,stage:'💰 Starlit deposit PAID '+money(Math.round(Number(s.amount_total||0)/100))+' · book the installer',firstName:order.first_name,phone:order.phone,email:order.email,year:order.year,make:order.make,model:order.model,desiredDate:order.desired_date,timeWindow:order.time_window,package:order.stars+' stars',total:money(order.total),balance:money(order.total-order.deposit)});
+  fresh=true;
+ });
+ if(fresh)await meta('Purchase',id+'-deposit',origin(),{em:[hash(order.email)],ph:[hash(order.phone.length===10?'1'+order.phone:order.phone)]});
+ return {received:true};
+}
 function checkoutUrl(id,email){
  const base=process.env.STARLIGHT_DEPOSIT_URL;if(!base)return '';
  // Stripe Payment Links accept these to prefill the email and tie the payment to the order.
@@ -83,5 +121,7 @@ export async function placeStarlightOrder(b,{turnstile}){
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{em:[hash(email)],ph:[hash(phone.length===10?'1'+phone:phone)]});
  const row=(await query('SELECT total,deposit FROM starlight_orders WHERE id=$1',[id])).rows[0];
- return {id,eventId:id,total:Number(row.total),deposit:Number(row.deposit),balance:Number(row.total)-Number(row.deposit),checkoutUrl:checkoutUrl(id,email)};
+ let url=checkoutUrl(id,email);
+ if(process.env.STRIPE_SECRET_KEY){try{url=(await stripeSession({id,email,stars:tier.stars,total:Number(row.total),deposit:Number(row.deposit)})).url;}catch(e){console.error('Stripe checkout failed:',e.message);}}
+ return {id,eventId:id,total:Number(row.total),deposit:Number(row.deposit),balance:Number(row.total)-Number(row.deposit),checkoutUrl:url};
 }
