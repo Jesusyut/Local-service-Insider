@@ -4,7 +4,7 @@ import {tidyLead,priceText} from './starlit-links.mjs';
 // Starlit email sequence for starlight inquiries: quote email ~90 min after the welcome email,
 // then trust-building follow-ups. Sent through Brevo transactional templates; stops once they book.
 // STARLIT_STEPS="templateId@minutesAfterSignup,..." overrides the default schedule.
-const DEFAULT_STEPS='15@90,16@1440,17@4320,18@7200,19@11520';
+const DEFAULT_STEPS='15@25,16@1440,17@4320,18@7200,19@11520';
 export const steps=()=>(process.env.STARLIT_STEPS||DEFAULT_STEPS).split(',').map((s,i)=>{const [t,m]=s.split('@').map(Number);return {step:i+1,templateId:t,minutes:m};}).filter(s=>s.templateId>0&&s.minutes>=0);
 const now=()=>new Date().toISOString();
 
@@ -51,4 +51,15 @@ export async function tickStarlit({fetchImpl=fetch}={}){
   }
  }finally{running=false;}
  return sent;
+}
+
+// When the schedule changes, pull pending emails forward to the new timing (never later than already planned).
+export async function rescheduleStarlit(){
+ const minutes=Object.fromEntries(steps().map(s=>[s.step,s.minutes]));let moved=0;
+ for(const row of (await query("SELECT id,step,send_at,created_at FROM starlit_sequence WHERE status='pending'")).rows){
+  if(minutes[row.step]===undefined)continue;
+  const at=sendTime(new Date(Date.parse(row.created_at)+minutes[row.step]*60000)).toISOString();
+  if(at<row.send_at){await query('UPDATE starlit_sequence SET send_at=$1 WHERE id=$2',[at,row.id]);moved++;}
+ }
+ return moved;
 }
