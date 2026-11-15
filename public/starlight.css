@@ -109,3 +109,4 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 @media(min-width:900px){.reel{margin:0;padding:0 0 6px}.shot{height:400px}}
 .shot.tall2{aspect-ratio:720/1186}
 .shot.tall3{aspect-ratio:720/1094}
+.shot.tall4{aspect-ratio:720/954}
