@@ -77,3 +77,10 @@ test('starlit sequence: quiet hours, schedule, stop on booking, one send per ste
  assert.equal(sendTime(new Date('2026-11-15T06:30:00Z')).toISOString(),'2026-11-15T17:00:00.000Z'); // 10:30pm PT -> 9am PT
  assert.equal(sendTime(new Date('2026-11-15T13:00:00Z')).toISOString(),'2026-11-15T17:00:00.000Z'); // 5am PT -> 9am PT
 });
+test('starlit gallery media is served, video supports byte ranges',async()=>{
+ const html=await (await fetch(base+'/starlit')).text();assert.match(html,/\/media\/starlit-install\.mp4/);
+ const full=await fetch(base+'/media/starlit-install.mp4');assert.equal(full.status,200);assert.equal(full.headers.get('content-type'),'video/mp4');
+ const part=await fetch(base+'/media/starlit-install.mp4',{headers:{Range:'bytes=0-99'}});assert.equal(part.status,206);assert.equal((await part.arrayBuffer()).byteLength,100);assert.match(part.headers.get('content-range'),/^bytes 0-99\//);
+ assert.equal((await fetch(base+'/media/starlit-1.jpg')).headers.get('content-type'),'image/jpeg');
+ assert.equal((await fetch(base+'/media/other.jpg')).status,404);
+});

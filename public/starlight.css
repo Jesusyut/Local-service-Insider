@@ -99,3 +99,11 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 #out{word-break:break-all;padding:8px 0;color:var(--ink-2)}
 .starlit .check{font-size:15px}
 .starlit select{color:var(--ink)}
+.reel-wrap{display:flex;flex-direction:column;gap:12px;min-width:0}
+.reel-head{display:flex;flex-direction:column;gap:4px}
+.reel-head h2{font-size:24px}
+.reel{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1*max(18px,env(safe-area-inset-left)));padding:0 max(18px,env(safe-area-inset-left)) 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.reel::-webkit-scrollbar{display:none}
+.shot{flex:0 0 auto;height:320px;width:auto;max-width:none;border-radius:12px;scroll-snap-align:start;background:#11141C;object-fit:cover}
+.shot.tall{aspect-ratio:720/1210}
+@media(min-width:900px){.reel{margin:0;padding:0 0 6px}.shot{height:400px}}
