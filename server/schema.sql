@@ -17,3 +17,4 @@ CREATE TABLE IF NOT EXISTS intake_quote_requests(intake_id TEXT PRIMARY KEY REFE
 CREATE TABLE IF NOT EXISTS deals_signups(id TEXT PRIMARY KEY,email TEXT NOT NULL,first_name TEXT NOT NULL,service_id TEXT,created_at TEXT NOT NULL);
 
 CREATE TABLE IF NOT EXISTS starlight_orders(id TEXT PRIMARY KEY,first_name TEXT NOT NULL,email TEXT NOT NULL,phone TEXT NOT NULL,year INTEGER NOT NULL,make TEXT NOT NULL,model TEXT NOT NULL,stars INTEGER NOT NULL,addons TEXT NOT NULL,total INTEGER NOT NULL,deposit INTEGER NOT NULL,desired_date TEXT NOT NULL,time_window TEXT NOT NULL,notes TEXT,status TEXT NOT NULL,source TEXT,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS starlight_order_codes(order_id TEXT PRIMARY KEY,code TEXT NOT NULL,discount INTEGER NOT NULL,list_total INTEGER NOT NULL,created_at TEXT NOT NULL);

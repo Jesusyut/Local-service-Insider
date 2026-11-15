@@ -60,8 +60,10 @@
 <p class="fine" id="terms">Your $250 deposit is non-refundable. It holds your install day and comes off your total. The balance is due at drop-off, before work starts. <span id="consent"></span></p>
 </form>
 <aside class="side">
+<div class="deal" id="deal" hidden><b>Exclusive price</b><span id="deal-text"></span></div>
 <div class="receipt" aria-live="polite"><div class="receipt-head"><span>Your order</span><span id="r-total-h"></span></div>
 <div class="receipt-rows" id="rows"></div>
+<div class="code-row"><button type="button" class="link" id="code-open">Have a code?</button><div class="code-box" id="code-box" hidden><input id="code" maxlength="30" autocomplete="off" aria-label="Code"><button type="button" class="chip" id="code-apply">Apply</button></div><p class="fine" id="code-msg" role="alert" hidden></p></div>
 <div class="due"><div><small>Due today</small><strong id="r-dep">$250</strong></div><div><small>At drop-off</small><strong id="r-bal"></strong></div></div></div>
 <div class="ask" id="ask"><b>Questions first?</b><p class="fine" id="ask-text">Reply to our email and we’ll get right back to you.</p><div class="ask-links" id="ask-links" hidden></div></div>
 </aside>

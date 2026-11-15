@@ -2,7 +2,7 @@ import http from 'node:http';
 import {renderSearchPage,seoPath,siteOrigin} from './seo.mjs';
 import {createSpamCheck} from './spam-check.mjs';
 import {captureDeals,dealsInterest} from './deals.mjs';
-import {starlightConfig,placeStarlightOrder} from './starlight.mjs';
+import {starlightConfig,placeStarlightOrder,findCode} from './starlight.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -66,6 +66,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(process.env.MAINTENANCE_MODE==='true'){res.setHeader('Retry-After','120');return json(res,{error:'We are updating the price checker. Please try again shortly.'},503);}
  if(path==='/api/config')return json(res,{localToday:localToday(),...(await publicCatalog()),copy,drivers,newsletterConsent,leadConsent,turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||'',yearMax:new Date().getFullYear()+1});
  if(path==='/api/starlight')return json(res,{...starlightConfig(),turnstileSiteKey:spamCheck.siteKey,metaPixelId:process.env.META_PIXEL_ID||''});
+ if(path==='/api/starlight-code'){rate(req,'starlight-code',30);const c=findCode(url.searchParams.get('code'));return c?json(res,c):json(res,{error:'That code isn’t valid.'},404);}
  if(path==='/api/starlight-order'&&req.method==='POST'){rate(req,'starlight',10);const result=await placeStarlightOrder(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/deals/interest'&&req.method==='POST'){rate(req,'deals-interest',30);const result=await dealsInterest(await body(req));void drain().catch(()=>{});return json(res,result);}
  if(path==='/api/deals'&&req.method==='POST'){rate(req,'deals',15);const result=await captureDeals(await body(req),{turnstile});void drain().catch(()=>{});return json(res,result);}

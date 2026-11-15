@@ -6,7 +6,7 @@ const source=Object.fromEntries([...params].filter(([k])=>k.startsWith('utm_')||
 const requestId=crypto.randomUUID();
 const SW=[{id:'white',name:'Cool white',c:'#EEF2FF'},{id:'warm',name:'Warm white',c:'#FFE3AE'},{id:'blue',name:'Ice blue',c:'#7DB3FF'},{id:'purple',name:'Purple',c:'#B48BFF'},{id:'red',name:'Red',c:'#FF6A6A'}];
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
-let cfg,token='',state={stars:750,addons:new Set(),color:'white',time:''};
+let cfg,token='',state={stars:750,addons:new Set(),color:'white',time:'',code:null};
 async function api(path,data){const r=await fetch(path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'Please try again.');return b;}
 const pixel=(name,data,id)=>{if(window.fbq)window.fbq('track',name,data,id?{eventID:id}:{});};
 
@@ -54,13 +54,15 @@ new IntersectionObserver(e=>visible=e[0].isIntersecting).observe(canvas);
 const redraw=()=>{if(reduce){shown=state.stars;draw(0);}};
 
 /* ---------- Configurator ---------- */
-function totals(){const tier=cfg.tiers.find(t=>t.stars===state.stars),extras=cfg.addons.filter(a=>state.addons.has(a.id)),total=tier.price+extras.reduce((s,a)=>s+a.price,0);return {tier,extras,total,balance:total-cfg.deposit};}
+function totals(){const tier=cfg.tiers.find(t=>t.stars===state.stars),extras=cfg.addons.filter(a=>state.addons.has(a.id)),list=tier.price+extras.reduce((s,a)=>s+a.price,0),total=list-(state.code?.off||0);return {tier,extras,list,total,balance:total-cfg.deposit};}
 function render(){
  const {tier,extras,total,balance}=totals();
  document.querySelectorAll('.tier').forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.stars)===state.stars)));
  $('#cap-stars').textContent=tier.stars.toLocaleString('en-US')+' stars';
  canvas.setAttribute('aria-label',`Preview of a headliner with ${tier.stars.toLocaleString('en-US')} stars`);
- $('#rows').innerHTML=`<div class="rrow"><span>${tier.stars.toLocaleString('en-US')} star headliner</span><span>${money(tier.price)}</span></div>`+extras.map(a=>`<div class="rrow"><span>${esc(a.name)}</span><span>${money(a.price)}</span></div>`).join('')+`<div class="rrow total"><span>Total installed</span><span>${money(total)}</span></div>`;
+ $('#rows').innerHTML=`<div class="rrow"><span>${tier.stars.toLocaleString('en-US')} star headliner</span><span>${money(tier.price)}</span></div>`+extras.map(a=>`<div class="rrow"><span>${esc(a.name)}</span><span>${money(a.price)}</span></div>`).join('')+(state.code?`<div class="rrow deal"><span>${esc(state.code.label)} <small>${esc(state.code.code)}</small></span><span>−${money(state.code.off)}</span></div>`:'')+`<div class="rrow total"><span>Total installed</span><span>${money(total)}</span></div>`;
+ $('#deal').hidden=!state.code;if(state.code)$('#deal-text').textContent=`${state.code.label} applied: ${money(state.code.off)} off any package.`;
+ document.querySelectorAll('.tier .p').forEach(el=>{const t=cfg.tiers.find(x=>x.stars===Number(el.closest('.tier').dataset.stars));el.innerHTML=state.code?`<s>${money(t.price)}</s> ${money(t.price-state.code.off)}`:money(t.price);});
  $('#r-total-h').textContent=money(total);$('#r-dep').textContent=money(cfg.deposit);$('#r-bal').textContent=money(balance);
  $('#bar-total').textContent=money(total);$('#bar-sum').textContent=tier.stars.toLocaleString('en-US')+' stars'+(extras.length?` + ${extras.length} extra${extras.length>1?'s':''}`:'')+` · ${money(cfg.deposit)} today`;
  redraw();
@@ -77,6 +79,7 @@ function personalize(){
 function build(){
  const preset=Number(params.get('stars'));if(cfg.tiers.some(t=>t.stars===preset))state.stars=preset;shown=state.stars;
  personalize();
+ if(params.get('code'))applyCode(params.get('code'),true);
  $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'?'<em>Most popular</em>':''}</span><span class="p">${money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
@@ -103,6 +106,15 @@ function build(){
 $('#bar-go').onclick=()=>{const f=document.querySelector('#year');f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>f.focus({preventScroll:true}),450);};
 new IntersectionObserver(e=>$('#buybar').hidden=e[0].isIntersecting).observe($('#pay'));
 
+async function applyCode(c,quiet){
+ const msg=$('#code-msg');
+ try{state.code=await api('/api/starlight-code?code='+encodeURIComponent(c.trim()));msg.hidden=true;$('#code-box').hidden=true;$('#code-open').hidden=true;}
+ catch(e){if(!quiet){msg.hidden=false;msg.textContent=e.message;}}
+ render();
+}
+$('#code-open').onclick=()=>{$('#code-box').hidden=false;$('#code-open').hidden=true;$('#code').focus();};
+$('#code-apply').onclick=()=>applyCode($('#code').value);
+$('#code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyCode($('#code').value);}};
 /* ---------- Checkout ---------- */
 const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 function showError(m){const e=$('#err');e.hidden=false;e.textContent=m;e.scrollIntoView({behavior:'smooth',block:'center'});}
@@ -118,8 +130,8 @@ $('#book').onsubmit=async e=>{
  const btn=$('#pay'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving your day…';
  const {tier,extras}=totals();
  try{
-  const r=await api('/api/starlight-order',{id:requestId,stars:state.stars,addons:[...state.addons],year,make:v('make'),model:v('model'),date:v('date'),time:state.time,firstName:v('firstName'),email:v('email'),phone,notes:v('notes'),disclosureVersion:cfg.disclosureVersion,source,turnstileToken:token});
-  const order={id:r.id,name:v('firstName'),car:`${year} ${v('make')} ${v('model')}`,date:v('date'),time:state.time,total:r.total,deposit:r.deposit,balance:r.balance,rows:[[`${tier.stars.toLocaleString('en-US')} star headliner`,money(tier.price)],...extras.map(a=>[a.name,money(a.price)]),['Install',`${dayName(v('date'))}, ${state.time.toLowerCase()}`],['Car',`${year} ${v('make')} ${v('model')}`]]};
+  const r=await api('/api/starlight-order',{id:requestId,stars:state.stars,addons:[...state.addons],year,make:v('make'),model:v('model'),date:v('date'),time:state.time,firstName:v('firstName'),email:v('email'),phone,notes:v('notes'),disclosureVersion:cfg.disclosureVersion,code:state.code?.code,source,turnstileToken:token});
+  const order={id:r.id,name:v('firstName'),car:`${year} ${v('make')} ${v('model')}`,date:v('date'),time:state.time,total:r.total,deposit:r.deposit,balance:r.balance,rows:[[`${tier.stars.toLocaleString('en-US')} star headliner`,money(tier.price)],...extras.map(a=>[a.name,money(a.price)]),...(state.code?[[state.code.label,'−'+money(state.code.off)]]:[]),['Install',`${dayName(v('date'))}, ${state.time.toLowerCase()}`],['Car',`${year} ${v('make')} ${v('model')}`]]};
   store.set('starlight-order',order);
   pixel('Lead',{value:r.total,currency:'USD',content_name:'Starlight headliner'},r.eventId);
   if(r.checkoutUrl){pixel('InitiateCheckout',{value:r.deposit,currency:'USD'});btn.textContent='Opening secure checkout…';location.href=r.checkoutUrl;return;}

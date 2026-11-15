@@ -29,3 +29,13 @@ test('order totals are computed on the server, validated, and retries do not dup
  const t=JSON.parse(db.prepare("SELECT payload FROM outbox WHERE id=?").get('telegram-starlight-'+body.id).payload);assert.equal(t.total,'$1,939');assert.match(t.addons,/Shooting stars \$295/);
  const {telegramText}=await import('../server/telegram.mjs');assert.match(telegramText(t),/Balance at drop-off: \$1,689/);
 });
+test('member code takes a real discount off list, server-side only',async()=>{
+ assert.equal((await api('/api/starlight-code?code=nope')).status,404);
+ const c=await api('/api/starlight-code?code=insider100');assert.equal(c.status,200);assert.equal(c.data.off,100);
+ assert.equal((await api('/api/starlight')).data.codes,undefined);
+ const body={id:randomUUID(),stars:1000,addons:[],year:2025,make:'Nissan',model:'Altima',date:tomorrow(),time:'Midday',firstName:'Angelina',email:'ang@example.test',phone:'6265550134',code:'INSIDER100',disclosureVersion:'starlit-v1'};
+ assert.equal((await api('/api/starlight-order',{...body,code:'FAKE'})).status,400);
+ const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);assert.equal(ok.data.total,1299);assert.equal(ok.data.balance,1049);
+ const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
+ assert.deepEqual({...db.prepare('SELECT code,discount,list_total FROM starlight_order_codes WHERE order_id=?').get(body.id)},{code:'INSIDER100',discount:100,list_total:1399});
+});
