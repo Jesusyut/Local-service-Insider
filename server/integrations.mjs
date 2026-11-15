@@ -21,7 +21,7 @@ export async function deliver(job){const p=JSON.parse(job.payload);
   // One Brevo transactional template to one contact (contact.* attributes + params personalize it).
   if(!process.env.BREVO_API_KEY)throw new Error('Brevo is not configured');
   const r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':process.env.BREVO_API_KEY,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({templateId:p.templateId,to:[{email:p.email,name:p.name}],params:p.params,...(p.sender?{sender:p.sender}:{}),tags:['starlit']}),signal:AbortSignal.timeout(15000)});
-  if(!r.ok)throw new Error('Brevo send HTTP '+r.status);
+  if(!r.ok)throw new Error('Brevo send HTTP '+r.status+' '+(await r.text()).slice(0,300));
  }else if(job.kind==='telegram'){
   let lead=p;
   if(p.intakeId){
