@@ -1,0 +1,5 @@
+import {randomUUID} from 'node:crypto';
+import {pool,transaction,audit} from './db.js';
+if(process.env.NODE_ENV==='production')throw Error('Demo seed is local-only');
+if(process.env.SMS_ENABLED==='true')throw Error('Disable SMS before demo seeding');
+await transaction(async c=>{const existing=(await c.query("SELECT id FROM partners WHERE owner_email='demo@example.invalid'")).rows[0];if(existing)return;const id=randomUUID();await c.query("INSERT INTO partners(id,business_name,owner_name,owner_email,timezone,commission_pct,per_show_fee_cents,status) VALUES($1,'Demo Installer','Demo Owner','demo@example.invalid',$2,10,7500,'active')",[id,process.env.DEMO_TIMEZONE||'UTC']);for(const zip of ['00001','00002','00003'])await c.query('INSERT INTO territories(id,partner_id,zip) VALUES($1,$2,$3)',[randomUUID(),id,zip]);for(let weekday=0;weekday<7;weekday++)await c.query("INSERT INTO availability(id,partner_id,weekday,start_time,end_time) VALUES($1,$2,$3,'09:00','17:00')",[randomUUID(),id,weekday]);await audit(c,'partner',id,'demo_seeded');console.log('Demo partner created:',id);});await pool.end();
