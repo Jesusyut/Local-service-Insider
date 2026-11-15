@@ -4,6 +4,7 @@ import {createSpamCheck} from './spam-check.mjs';
 import {captureDeals,dealsInterest} from './deals.mjs';
 import {starlightConfig,placeStarlightOrder,findCode,stripeWebhook} from './starlight.mjs';
 import {ensureStarlitTemplate} from './brevo-template.mjs';
+import {starlitLink} from './starlit-links.mjs';
 import {captureIntake,completeIntake,rateIntake,requestQuote,localToday} from './intake.mjs';
 import {readFile} from 'node:fs/promises';
 import {randomUUID,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
@@ -119,6 +120,12 @@ const server=http.createServer(async(req,res)=>{try{
  const starlitHost=process.env.STARLIGHT_HOST&&(req.headers.host||'').split(':')[0].toLowerCase()===process.env.STARLIGHT_HOST.toLowerCase();
  if(starlitHost&&path==='/robots.txt'){res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});return res.end('User-agent: *\nDisallow: /\n');}
  if(starlitHost&&path==='/'){const html=await readFile(new URL('../public/starlight.html',import.meta.url));res.writeHead(200,{'Content-Type':'text/html','Cache-Control':'no-cache','X-Robots-Tag':'noindex'});return res.end(html);}
+ // Short personal Starlit link from a lead id (first 8+ hex chars): /q/3bb09784
+ const q=path.match(/^\/q\/([0-9a-f]{8}[0-9a-f-]{0,28})$/i);
+ if(q){const row=(await query("SELECT s.first_name,s.email,i.phone,i.vehicle_year,i.make,i.model,i.desired_date,r.preferred_time FROM intake_leads i JOIN subscribers s ON s.id=i.subscriber_id LEFT JOIN intake_quote_requests r ON r.intake_id=i.id WHERE i.id LIKE $1 ORDER BY i.created_at DESC LIMIT 1",[q[1].toLowerCase()+'%'])).rows[0];
+  const extra=Object.fromEntries(['stars'].map(k=>[k,url.searchParams.get(k)]).filter(([,v])=>/^\d{3,4}$/.test(v||'')));
+  const to=row?starlitLink({firstName:row.first_name,email:row.email,phone:row.phone,year:row.vehicle_year,make:row.make,model:row.model,desiredDate:row.desired_date,timeWindow:row.preferred_time,...extra}).replace(/^https?:\/\/[^/]+/,''):'/starlit?code=INSIDER';
+  res.writeHead(302,{Location:to,'Cache-Control':'no-store','X-Robots-Tag':'noindex'});return res.end();}
  if(path==='/robots.txt'){res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: '+siteOrigin()+'/sitemap.xml\n');}
  if(path==='/sitemap.xml'){res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8'});return res.end(req.method==='HEAD'?undefined:'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>'+siteOrigin()+seoPath+'</loc></url></urlset>');}
  if(path==='/pick'){res.writeHead(301,{Location:'/'+url.search,'Cache-Control':'no-cache'});return res.end();}
