@@ -125,3 +125,7 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
 @media(min-width:900px){.reel-btn{display:inline-flex;align-items:center;justify-content:center}.reel-hint{display:none}.reel-frame::after{right:0}}
 @media(prefers-reduced-motion:reduce){.reel-hint{animation:none}}
+.starlit .sky{border:1.5px solid #4C8DFF}
+.sky-tag{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2;padding:3px 12px 4px;border-radius:0 0 8px 8px;background:#4C8DFF;color:#07080D;font:600 11px/1.2 var(--body);letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap}
+.reel-wrap{scroll-margin-top:16px}
+@media(max-width:899px){.reel-wrap{scroll-margin-top:calc(38vh + 40px)}}

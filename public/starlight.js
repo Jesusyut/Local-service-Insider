@@ -104,7 +104,11 @@ function build(){
 }
 // Mobile buy bar: jumps to the form, hides once the real button is on screen.
 $('#bar-go').onclick=()=>{const f=document.querySelector('#year');f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>f.focus({preventScroll:true}),450);};
-new IntersectionObserver(e=>$('#buybar').hidden=e[0].isIntersecting).observe($('#pay'));
+// Price footer shows once they reach step 3 (extras) and hides when the real pay button is on screen.
+let payVisible=false;
+const barUpdate=()=>{const bar=$('#buybar'),s3=$('#step3');if(!bar||!s3)return;bar.hidden=payVisible||s3.getBoundingClientRect().top>innerHeight*.85;};
+new IntersectionObserver(e=>{payVisible=e[0].isIntersecting;barUpdate();}).observe($('#pay'));
+addEventListener('scroll',barUpdate,{passive:true});addEventListener('resize',barUpdate);
 
 async function applyCode(c,quiet){
  const msg=$('#code-msg');
@@ -126,7 +130,7 @@ $('#code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyCode($('#co
 /* ---------- Checkout ---------- */
 const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 function showError(m){const e=$('#err');e.hidden=false;e.textContent=m;e.scrollIntoView({behavior:'smooth',block:'center'});}
-function finish(html){$('#buybar').hidden=true;$('#app').innerHTML=`<header class="store-head"><p class="wordmark brand">Starlit<span>Interiors</span></p></header><section class="done">${html}</section>`;window.scrollTo({top:0});}
+function finish(html){$('#buybar').remove();$('#app').innerHTML=`<header class="store-head"><p class="wordmark brand">Starlit<span>Interiors</span></p></header><section class="done">${html}</section>`;window.scrollTo({top:0});}
 function receiptHtml(o){return `<div class="receipt"><div class="receipt-head"><span>Your order</span><span>${money(o.total)}</span></div><div class="receipt-rows">${o.rows.map(([a,b])=>`<div class="rrow"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}</div><div class="due"><div><small>Deposit</small><strong>${money(o.deposit)}</strong></div><div><small>At drop-off</small><strong>${money(o.balance)}</strong></div></div></div>`;}
 $('#book').onsubmit=async e=>{
  e.preventDefault();$('#err').hidden=true;

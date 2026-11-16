@@ -25,12 +25,13 @@
 <div class="build">
 <div class="stage" aria-label="Preview of your headliner">
 <div class="sky"><canvas id="sky" role="img" aria-label="Headliner preview"></canvas>
+<a class="sky-tag" href="#reel-wrap">Real examples below &darr;</a>
 <div class="sky-cap"><b id="cap-stars">750 stars</b><span>Every star drawn to scale on the same roof</span></div></div>
 </div>
 <div class="config">
 <section class="step"><h2><small>STEP 1</small>Pick your star count</h2><div class="tiers" id="tiers" role="radiogroup" aria-label="Star package"></div></section>
 <section class="step"><h2><small>STEP 2</small>Try a color</h2><p class="fine">Preview only. Your stars do 1,000+ colors from the app and remote, so you can change them anytime.</p><div class="swatches" id="swatches"></div></section>
-<section class="step"><h2><small>STEP 3</small>Add extras</h2><div class="addons" id="addons"></div></section>
+<section class="step" id="step3"><h2><small>STEP 3</small>Add extras</h2><div class="addons" id="addons"></div></section>
 <section class="incl"><h3>Every package includes</h3><ul class="points">
 <li>Fiber-optic stars hand-placed across your headliner</li>
 <li>1,000+ colors, twinkle and music-sync modes</li>
@@ -40,7 +41,7 @@
 </div>
 </div>
 
-<section class="reel-wrap" aria-label="Real starlight installs">
+<section class="reel-wrap" id="reel-wrap" aria-label="Real starlight installs">
 <div class="reel-head"><div><h2>Real installs</h2><p class="fine">Stars, shooting stars and ambient trim, all set from the app.</p></div><div class="reel-nav"><span class="reel-hint">Swipe for more &rarr;</span><button type="button" class="reel-btn" id="reel-prev" aria-label="Previous video">&larr;</button><button type="button" class="reel-btn" id="reel-next" aria-label="Next video">&rarr;</button></div></div>
 <div class="reel-frame" id="reel-frame"><div class="reel" id="reel">
 <video class="shot tall2" src="/media/starlit-install-3.mp4" poster="/media/starlit-install-3-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Starlight headliner with a color-changing constellation shape"></video>
@@ -87,6 +88,6 @@
 <details><summary>Can I see it before I pay the balance?</summary><p>You pay the balance at drop-off, before work starts, and the installer walks you through the layout first.</p></details>
 </section>
 </main>
-<div class="buybar" id="buybar"><div><small id="bar-sum">750 stars</small><strong id="bar-total"></strong></div><button class="btn" id="bar-go" type="button">Book my day</button></div>
+<div class="buybar" id="buybar" hidden><div><small id="bar-sum">750 stars</small><strong id="bar-total"></strong></div><button class="btn" id="bar-go" type="button">Book my day</button></div>
 </body>
 </html>
