@@ -26,7 +26,7 @@ export async function capturePreview(b,{turnstile}){
   const stamp=now();
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
   await q('INSERT INTO starlight_preview_leads(id,first_name,phone,vehicle,source,created_at) VALUES($1,$2,$3,$4,$5,$6)',[id,name,phone.slice(-10),vehicle,JSON.stringify(source),stamp]);
-  await job(q,'telegram-preview-'+id,'telegram',{id,stage:'Starlight preview unlocked · text them install videos',firstName:name,phone:phone.slice(-10),service:'Starlight headliner',vehicle,year:car.year,make:car.make,model:car.model,notes:'Car as typed: '+vehicle});
+  await job(q,'telegram-preview-'+id,'telegram',{id,stage:'Starlight preview unlocked · follow up by text',firstName:name,phone:phone.slice(-10),service:'Starlight headliner',vehicle,year:car.year,make:car.make,model:car.model,notes:'Car as typed: '+vehicle});
   fresh=true;
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{ph:[hash('1'+phone.slice(-10))]});
