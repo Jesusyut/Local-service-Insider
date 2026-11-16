@@ -148,3 +148,13 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 @media(max-width:899px){.stage.stuck .play{display:none}}
 .sky-hint{position:absolute;top:30px;right:12px;z-index:2;font-size:11px;color:#F3F4F7;opacity:.85;pointer-events:none;text-shadow:0 1px 4px #000}
 @media(min-width:900px){.sky-hint{top:12px;font-size:12px}}
+.pv h1{font-size:clamp(34px,8.5vw,56px);line-height:1;max-width:15ch;text-wrap:balance}
+.pv-grid{display:grid;gap:26px}
+.pv-copy{display:flex;flex-direction:column;gap:16px;min-width:0}
+.pv-shot img{display:block;width:100%;height:auto;border-radius:12px;border:1.5px solid #4C8DFF}
+.pv-points b{color:var(--ink)}
+.pv-card{display:flex;flex-direction:column;gap:14px;padding:22px 18px;border-radius:14px;background:var(--white);border:1.5px solid #4C8DFF;box-shadow:0 30px 80px -30px rgba(120,140,255,.35)}
+.pv-card h2{font-size:26px}
+.pv-card form{display:flex;flex-direction:column;gap:14px}
+@media(max-width:899px){.pv-grid{grid-template-areas:"copy" "card"}.pv-copy .pv-shot,.pv-copy .pv-points{order:3}.pv-card{order:2}.pv-grid{display:flex;flex-direction:column}.pv-copy{display:contents}.pv-copy>.eyebrow{order:0}.pv-copy>h1{order:0}.pv-copy>.lede{order:1}}
+@media(min-width:900px){.pv-grid{grid-template-columns:minmax(0,1.1fr) 420px;gap:56px;align-items:start}.pv-card{position:sticky;top:24px}}

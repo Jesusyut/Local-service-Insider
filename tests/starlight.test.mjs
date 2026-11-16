@@ -86,3 +86,17 @@ test('starlit gallery media is served, video supports byte ranges',async()=>{
  for(const f of ['starlit-install-5.mp4','starlit-install-4.mp4','starlit-install-2.mp4','starlit-install-3.mp4','starlit-install-3-poster.jpg'])assert.equal((await fetch(base+'/media/'+f)).status,200);
  assert.equal((await fetch(base+'/media/starlit-3.jpg')).status,404);assert.equal((await fetch(base+'/media/starlit-1.jpg')).status,404);
 });
+test('preview gate: 3 fields, lead saved once, car parsed for the preview',async()=>{
+ const {parseVehicle}=await import('../server/starlight-preview.mjs');
+ assert.deepEqual(parseVehicle('2023 Tesla Model Y'),{year:2023,make:'Tesla',model:'Model Y'});
+ assert.deepEqual(parseVehicle('kia k5 2026'),{year:2026,make:'kia',model:'k5'});
+ const html=await (await fetch(base+'/preview')).text();assert.match(html,/Unlock your free preview/);
+ const body={id:randomUUID(),firstName:'Jay',phone:'(619) 555-0111',vehicle:'2023 Tesla Model Y'};
+ assert.equal((await api('/api/starlight-preview',{...body,phone:'12'})).status,400);
+ assert.equal((await api('/api/starlight-preview',{...body,vehicle:''})).status,400);
+ const ok=await api('/api/starlight-preview',body);assert.equal(ok.status,200);assert.equal(ok.data.car.make,'Tesla');
+ assert.equal((await api('/api/starlight-preview',body)).status,200);
+ const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM starlight_preview_leads WHERE id=?").get(body.id).n,1);
+ assert.equal(db.prepare("SELECT COUNT(*) n FROM outbox WHERE id=?").get('telegram-preview-'+body.id).n,1);
+});

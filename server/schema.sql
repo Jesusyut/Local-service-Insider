@@ -20,3 +20,4 @@ CREATE TABLE IF NOT EXISTS starlight_orders(id TEXT PRIMARY KEY,first_name TEXT 
 CREATE TABLE IF NOT EXISTS starlight_order_codes(order_id TEXT PRIMARY KEY,code TEXT NOT NULL,discount INTEGER NOT NULL,list_total INTEGER NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS starlight_payments(order_id TEXT PRIMARY KEY,session_id TEXT NOT NULL,amount INTEGER NOT NULL,paid_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS starlit_sequence(id TEXT PRIMARY KEY,email TEXT NOT NULL,first_name TEXT,request_id TEXT,step INTEGER NOT NULL,template_id INTEGER NOT NULL,send_at TEXT NOT NULL,status TEXT NOT NULL,sent_at TEXT,last_error TEXT,attempts INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS starlight_preview_leads(id TEXT PRIMARY KEY,first_name TEXT NOT NULL,phone TEXT NOT NULL,vehicle TEXT NOT NULL,source TEXT,created_at TEXT NOT NULL);
