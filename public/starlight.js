@@ -83,17 +83,11 @@ function build(){
  $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'||t.tag==='Best long-term'?`<em>${esc(t.tag)}</em>`:''}</span><span class="p">${money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
- $('#play-colors').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
  document.querySelectorAll('.sw').forEach(b=>{b.style.setProperty('--c',SW.find(s=>s.id===b.dataset.c).c);});
  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{state.color=b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.c===state.color)));meteor=null;render();});
- // Preview playground: effects shown in the preview only; they never change the order total.
- const fxSync=()=>document.querySelectorAll('.fx').forEach(x=>x.setAttribute('aria-pressed',String(state.fx[x.dataset.fx]||state.addons.has(x.dataset.fx))));
- document.querySelectorAll('.fx').forEach(b=>b.onclick=()=>{const k=b.dataset.fx;state.fx[k]=!state.fx[k];if(!state.fx[k])state.addons.delete(k),document.querySelectorAll('.addon input').forEach(i=>{if(i.value===k)i.checked=false;});meteor=null;fxSync();render();});
- $('#play-toggle').onclick=()=>{const open=$('#play-panel').hidden;$('#play-panel').hidden=!open;$('#play-toggle').setAttribute('aria-expanded',String(open));$('#play-toggle').classList.add('used');};
- fxSync();
  $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}${a.tag?` <em class="atag">${esc(a.tag)}</em>`:''}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
  document.querySelectorAll('.addon input').forEach(i=>{i.checked=state.addons.has(i.value);});
- document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
+ document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{state.fx={dual:false,shooting:false};i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
  $('#times').innerHTML=cfg.times.map(t=>`<button type="button" class="chip" aria-pressed="false" data-t="${t}">${t}</button>`).join('');
  const pt=params.get('time');if(cfg.times.includes(pt)){state.time=pt;document.querySelectorAll('#times .chip').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.t===pt)));}
  document.querySelectorAll('#times .chip').forEach(b=>b.onclick=()=>{state.time=b.dataset.t;document.querySelectorAll('#times .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
@@ -125,9 +119,6 @@ async function applyCode(c,quiet){
 $('#code-open').onclick=()=>{$('#code-box').hidden=false;$('#code-open').hidden=true;$('#code').focus();};
 $('#code-apply').onclick=()=>applyCode($('#code').value);
 $('#code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyCode($('#code').value);}};
-/* ---------- Phone: hide the customize controls once the preview is stuck to the top ---------- */
-(()=>{const stage=document.querySelector('.stage');if(!stage)return;const sentinel=document.createElement('div');(stage.closest('.build')||stage).before(sentinel);
- new IntersectionObserver(e=>stage.classList.toggle('stuck',!e[0].isIntersecting&&e[0].boundingClientRect.top<0)).observe(sentinel);})();
 /* ---------- Gallery: arrows, swipe hint, edge fade ---------- */
 (()=>{const reel=$('#reel'),frame=$('#reel-frame');if(!reel)return;
  const step=()=>Math.max(200,reel.clientWidth*.8);

@@ -146,3 +146,5 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 .fx[aria-pressed="true"]{background:#4C8DFF;border-color:#4C8DFF;color:#07080D}
 @media(prefers-reduced-motion:reduce){.play-toggle .knob{animation:none!important}}
 @media(max-width:899px){.stage.stuck .play{display:none}}
+.sky-hint{position:absolute;top:30px;right:12px;z-index:2;font-size:11px;color:#F3F4F7;opacity:.85;pointer-events:none;text-shadow:0 1px 4px #000}
+@media(min-width:900px){.sky-hint{top:12px;font-size:12px}}
