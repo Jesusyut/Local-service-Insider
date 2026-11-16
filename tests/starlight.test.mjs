@@ -101,3 +101,10 @@ test('preview gate: 3 fields, lead saved once, car parsed for the preview',async
  assert.equal(db.prepare("SELECT COUNT(*) n FROM starlight_preview_leads WHERE id=?").get(body.id).n,1);
  assert.equal(db.prepare("SELECT COUNT(*) n FROM outbox WHERE id=?").get('telegram-preview-'+body.id).n,1);
 });
+test('BOOK takes $100 off the total and stacks on the member price',async()=>{
+ const c=await api('/api/starlight-code?code=book');assert.equal(c.status,200);assert.equal(c.data.off,100);assert.equal(c.data.promo,true);
+ const base0={stars:750,addons:['shooting'],year:2024,make:'Kia',model:'K5',date:tomorrow(),time:'Morning',firstName:'Bo',email:'bo@example.test',phone:'6195550177',disclosureVersion:'starlit-v1'};
+ const solo=await api('/api/starlight-order',{...base0,id:randomUUID(),code:'BOOK'});assert.equal(solo.data.total,1550+295-100);
+ const both=await api('/api/starlight-order',{...base0,id:randomUUID(),code:'INSIDER',promo:'BOOK'});assert.equal(both.data.total,1225+295-100);
+ assert.equal((await api('/api/starlight-order',{...base0,id:randomUUID(),code:'INSIDER',promo:'NOPE'})).status,400);
+});

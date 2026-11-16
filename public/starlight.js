@@ -6,7 +6,7 @@ const source=Object.fromEntries([...params].filter(([k])=>k.startsWith('utm_')||
 const requestId=crypto.randomUUID();
 const SW=[{id:'white',name:'Cool white',c:'#EEF2FF'},{id:'warm',name:'Warm white',c:'#FFE3AE'},{id:'blue',name:'Ice blue',c:'#7DB3FF'},{id:'purple',name:'Purple',c:'#B48BFF'},{id:'red',name:'Red',c:'#FF6A6A'}];
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
-let cfg,token='',state={stars:750,addons:new Set(),color:'blue',time:'',code:null,fx:{dual:true,shooting:true}};
+let cfg,token='',state={stars:750,addons:new Set(),color:'blue',time:'',code:null,promo:null,fx:{dual:true,shooting:true}};
 async function api(path,data){const r=await fetch(path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'Please try again.');return b;}
 const pixel=(name,data,id)=>{if(window.fbq)window.fbq('track',name,data,id?{eventID:id}:{});};
 
@@ -54,15 +54,15 @@ new IntersectionObserver(e=>visible=e[0].isIntersecting).observe(canvas);
 const redraw=()=>{if(reduce){shown=state.stars;draw(0);}};
 
 /* ---------- Configurator ---------- */
-function totals(){const tier=cfg.tiers.find(t=>t.stars===state.stars),extras=cfg.addons.filter(a=>state.addons.has(a.id)),list=tier.price+extras.reduce((s,a)=>s+a.price,0),off=state.code?tier.price-state.code.prices[tier.stars]:0,total=list-off;return {tier,extras,list,off,total,balance:total-cfg.deposit};}
+function totals(){const tier=cfg.tiers.find(t=>t.stars===state.stars),extras=cfg.addons.filter(a=>state.addons.has(a.id)),list=tier.price+extras.reduce((s,a)=>s+a.price,0),memberOff=state.code?tier.price-state.code.prices[tier.stars]:0,promoOff=state.promo?state.promo.off:0,off=memberOff+promoOff,total=list-off;return {tier,extras,list,off,memberOff,promoOff,total,balance:total-cfg.deposit};}
 function render(){
- const {tier,extras,off,total,balance}=totals();
+ const {tier,extras,off,memberOff,promoOff,total,balance}=totals();
  document.querySelectorAll('.tier').forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.stars)===state.stars)));
  $('#cap-stars').textContent=tier.stars.toLocaleString('en-US')+' stars';
  canvas.setAttribute('aria-label',`Preview of a headliner with ${tier.stars.toLocaleString('en-US')} stars`);
- $('#rows').innerHTML=`<div class="rrow"><span>${tier.stars.toLocaleString('en-US')} star headliner</span><span>${money(tier.price)}</span></div>`+extras.map(a=>`<div class="rrow"><span>${esc(a.name)}</span><span>${money(a.price)}</span></div>`).join('')+(state.code?`<div class="rrow deal"><span>${esc(state.code.label)} <small>${esc(state.code.code)}</small></span><span>−${money(off)}</span></div>`:'')+`<div class="rrow total"><span>Total installed</span><span>${money(total)}</span></div>`;
- $('#deal').hidden=!state.code;if(state.code)$('#deal-text').textContent=`${state.code.label} applied. You save ${money(off)} on ${tier.stars.toLocaleString('en-US')} stars.`;
- document.querySelectorAll('.tier .p').forEach(el=>{const t=cfg.tiers.find(x=>x.stars===Number(el.closest('.tier').dataset.stars));el.innerHTML=state.code?`<s>${money(t.price)}</s> ${money(state.code.prices[t.stars])}`:money(t.price);});
+ $('#rows').innerHTML=`<div class="rrow"><span>${tier.stars.toLocaleString('en-US')} star headliner</span><span>${money(tier.price)}</span></div>`+extras.map(a=>`<div class="rrow"><span>${esc(a.name)}</span><span>${money(a.price)}</span></div>`).join('')+(state.code?`<div class="rrow deal"><span>${esc(state.code.label)} <small>${esc(state.code.code)}</small></span><span>−${money(memberOff)}</span></div>`:'')+(state.promo?`<div class="rrow deal"><span>${esc(state.promo.label)} <small>${esc(state.promo.code)}</small></span><span>−${money(promoOff)}</span></div>`:'')+`<div class="rrow total"><span>Total installed</span><span>${money(total)}</span></div>`;
+ $('#deal').hidden=!(state.code||state.promo);if(state.code||state.promo)$('#deal-text').textContent=`${[state.code?.label,state.promo?.label].filter(Boolean).join(' + ')} applied. You save ${money(off)} on ${tier.stars.toLocaleString('en-US')} stars.`;
+ document.querySelectorAll('.tier .p').forEach(el=>{const t=cfg.tiers.find(x=>x.stars===Number(el.closest('.tier').dataset.stars));const now=(state.code?state.code.prices[t.stars]:t.price)-(state.promo?state.promo.off:0);el.innerHTML=now<t.price?`<s>${money(t.price)}</s> ${money(now)}`:money(t.price);});
  $('#r-total-h').textContent=money(total);$('#r-dep').textContent=money(cfg.deposit);$('#r-bal').textContent=money(balance);
  $('#bar-total').textContent=money(total);$('#bar-sum').textContent=tier.stars.toLocaleString('en-US')+' stars'+(extras.length?` + ${extras.length} extra${extras.length>1?'s':''}`:'')+` · ${money(cfg.deposit)} today`;
  redraw();
@@ -112,7 +112,7 @@ addEventListener('scroll',barUpdate,{passive:true});addEventListener('resize',ba
 
 async function applyCode(c,quiet){
  const msg=$('#code-msg');
- try{state.code=await api('/api/starlight-code?code='+encodeURIComponent(c.trim()));msg.hidden=true;$('#code-box').hidden=true;$('#code-open').hidden=true;}
+ try{const r=await api('/api/starlight-code?code='+encodeURIComponent(c.trim()));if(r.promo)state.promo=r;else state.code=r;msg.hidden=true;$('#code-box').hidden=true;$('#code').value='';$('#code-open').hidden=Boolean(state.promo);}
  catch(e){if(!quiet){msg.hidden=false;msg.textContent=e.message;}}
  render();
 }
@@ -142,8 +142,8 @@ $('#book').onsubmit=async e=>{
  const btn=$('#pay'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving your day…';
  const {tier,extras,off}=totals();
  try{
-  const r=await api('/api/starlight-order',{id:requestId,stars:state.stars,addons:[...state.addons],year,make:v('make'),model:v('model'),date:v('date'),time:state.time,firstName:v('firstName'),email:v('email'),phone,notes:v('notes'),disclosureVersion:cfg.disclosureVersion,code:state.code?.code,source,turnstileToken:token});
-  const order={id:r.id,name:v('firstName'),car:`${year} ${v('make')} ${v('model')}`,date:v('date'),time:state.time,total:r.total,deposit:r.deposit,balance:r.balance,rows:[[`${tier.stars.toLocaleString('en-US')} star headliner`,money(tier.price)],...extras.map(a=>[a.name,money(a.price)]),...(state.code?[[state.code.label,'−'+money(off)]]:[]),['Install',`${dayName(v('date'))}, ${state.time.toLowerCase()}`],['Car',`${year} ${v('make')} ${v('model')}`]]};
+  const r=await api('/api/starlight-order',{id:requestId,stars:state.stars,addons:[...state.addons],year,make:v('make'),model:v('model'),date:v('date'),time:state.time,firstName:v('firstName'),email:v('email'),phone,notes:v('notes'),disclosureVersion:cfg.disclosureVersion,code:state.code?.code,promo:state.promo?.code,source,turnstileToken:token});
+  const order={id:r.id,name:v('firstName'),car:`${year} ${v('make')} ${v('model')}`,date:v('date'),time:state.time,total:r.total,deposit:r.deposit,balance:r.balance,rows:[[`${tier.stars.toLocaleString('en-US')} star headliner`,money(tier.price)],...extras.map(a=>[a.name,money(a.price)]),...(state.code?[[state.code.label,'−'+money(tier.price-state.code.prices[tier.stars])]]:[]),...(state.promo?[[state.promo.label,'−'+money(state.promo.off)]]:[]),['Install',`${dayName(v('date'))}, ${state.time.toLowerCase()}`],['Car',`${year} ${v('make')} ${v('model')}`]]};
   store.set('starlight-order',order);
   pixel('Lead',{value:r.total,currency:'USD',content_name:'Starlight headliner'},r.eventId);
   if(r.checkoutUrl){pixel('InitiateCheckout',{value:r.deposit,currency:'USD'});btn.textContent='Opening secure checkout…';location.href=r.checkoutUrl;return;}

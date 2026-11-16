@@ -21,6 +21,8 @@ export const starlightCatalog={
  // Member price per package (list is the walk-in price). Wholesale is 499/599/699/799/899,
  // so members still leave $450-$600 margin per job.
  codes:{INSIDER:{label:'Local Insider member price',prices:{500:949,600:1079,750:1225,850:1349,1000:1499}}},
+ // Promo codes take a flat amount off the total and stack on the member price (one promo per order).
+ promos:{BOOK:{label:'Booking discount',off:100}},
  deposit:250,
  consent:'We’ll only text and email you about this booking.',
  disclosureVersion:'starlit-v1'
@@ -35,21 +37,23 @@ const tomorrow=()=>{const d=new Date(localToday()+'T12:00:00Z');d.setUTCDate(d.g
 const phoneDigits=()=>String(process.env.BUSINESS_PHONE||'').replace(/\D/g,'');
 const prettyPhone=d=>{const t=d.length===11&&d[0]==='1'?d.slice(1):d;return t.length===10?`(${t.slice(0,3)}) ${t.slice(3,6)}-${t.slice(6)}`:'';};
 
-export function findCode(code){const c=String(code??'').trim().toUpperCase();const hit=starlightCatalog.codes[c];return hit?{code:c,...hit}:null;}
+export function findCode(code){const c=String(code??'').trim().toUpperCase();const hit=starlightCatalog.codes[c]||starlightCatalog.promos[c];return hit?{code:c,...hit,...(starlightCatalog.promos[c]?{promo:true}:{})}:null;}
 
-export function priceOrder(stars,addonIds,codeText){
+export function priceOrder(stars,addonIds,codeText,promoText){
  const tier=starlightCatalog.tiers.find(t=>t.stars===Number(stars));
  if(!tier)fail('Pick a star package.');
  const ids=[...new Set(Array.isArray(addonIds)?addonIds:[])];
  const addons=ids.map(id=>starlightCatalog.addons.find(a=>a.id===id)||fail('Pick add-ons from the list.'));
- const code=codeText?findCode(codeText):null;if(codeText&&!code)fail('That code isn’t valid.');
- const off=code?tier.price-code.prices[tier.stars]:0,list=tier.price+addons.reduce((s,a)=>s+a.price,0),total=list-off,deposit=starlightCatalog.deposit;
- return {tier,addons,code,off,list,total,deposit,balance:total-deposit};
+ // Either field may hold either kind of code; sort them by type.
+ const found=[codeText,promoText].filter(Boolean).map(c=>findCode(c)||fail('That code isn’t valid.'));
+ const code=found.find(c=>!c.promo)||null,promo=found.find(c=>c.promo)||null;
+ const off=(code?tier.price-code.prices[tier.stars]:0)+(promo?promo.off:0),list=tier.price+addons.reduce((s,a)=>s+a.price,0),total=list-off,deposit=starlightCatalog.deposit;
+ return {tier,addons,code,promo,off,list,total,deposit,balance:total-deposit};
 }
 
 export function starlightConfig(){
  const d=phoneDigits();
- const {codes,...pub}=starlightCatalog;
+ const {codes,promos,...pub}=starlightCatalog;
  return {...pub,onlineDeposit:Boolean(process.env.STRIPE_SECRET_KEY||process.env.STARLIGHT_DEPOSIT_URL),minDate:tomorrow(),phone:prettyPhone(d)?{display:prettyPhone(d),tel:'+'+(d.length===10?'1'+d:d)}:null};
 }
 
@@ -99,7 +103,8 @@ function checkoutUrl(id,email){
 export async function placeStarlightOrder(b,{turnstile}){
  await turnstile(b.turnstileToken);
  if(b.disclosureVersion!==starlightCatalog.disclosureVersion)fail('Please refresh to see the current booking terms.');
- const {tier,addons,code,off,list,total,deposit,balance}=priceOrder(b.stars,b.addons,b.code);
+ const {tier,addons,code,promo,off,list,total,deposit,balance}=priceOrder(b.stars,b.addons,b.code,b.promo);
+ const codeName=[code?.code,promo?.code].filter(Boolean).join('+');
  const id=text(b.id,36),name=text(b.firstName,80),email=text(b.email,254).toLowerCase(),phone=text(b.phone,30).replace(/\D/g,'');
  const year=Number(b.year),make=text(b.make,40),model=text(b.model,60),date=text(b.date,10),time=text(b.time,20),notes=text(b.notes,500),source=sourceOf(b.source);
  if(!/^[0-9a-f-]{36}$/i.test(id))fail('Please refresh and try again.');
@@ -115,8 +120,8 @@ export async function placeStarlightOrder(b,{turnstile}){
   const stamp=now();
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
   await q('INSERT INTO starlight_orders(id,first_name,email,phone,year,make,model,stars,addons,total,deposit,desired_date,time_window,notes,status,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)',[id,name,email,phone,year,make,model,tier.stars,JSON.stringify(addons.map(a=>a.id)),total,deposit,date,time,notes,'awaiting-deposit',JSON.stringify(source),stamp]);
-  if(code)await q('INSERT INTO starlight_order_codes(order_id,code,discount,list_total,created_at) VALUES($1,$2,$3,$4,$5)',[id,code.code,off,list,stamp]);
-  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total)+(code?` (${code.code} −${money(off)} off ${money(list)})`:''),balance:money(balance),notes});
+  if(codeName)await q('INSERT INTO starlight_order_codes(order_id,code,discount,list_total,created_at) VALUES($1,$2,$3,$4,$5)',[id,codeName,off,list,stamp]);
+  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total)+(codeName?` (${codeName} −${money(off)} off ${money(list)})`:''),balance:money(balance),notes});
   fresh=true;
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{em:[hash(email)],ph:[hash(phone.length===10?'1'+phone:phone)]});
