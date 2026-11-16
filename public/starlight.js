@@ -6,7 +6,7 @@ const source=Object.fromEntries([...params].filter(([k])=>k.startsWith('utm_')||
 const requestId=crypto.randomUUID();
 const SW=[{id:'white',name:'Cool white',c:'#EEF2FF'},{id:'warm',name:'Warm white',c:'#FFE3AE'},{id:'blue',name:'Ice blue',c:'#7DB3FF'},{id:'purple',name:'Purple',c:'#B48BFF'},{id:'red',name:'Red',c:'#FF6A6A'}];
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
-let cfg,token='',state={stars:750,addons:new Set(),color:'white',time:'',code:null};
+let cfg,token='',state={stars:750,addons:new Set(),color:'blue',time:'',code:null,fx:{dual:true,shooting:true}};
 async function api(path,data){const r=await fetch(path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'Please try again.');return b;}
 const pixel=(name,data,id)=>{if(window.fbq)window.fbq('track',name,data,id?{eventID:id}:{});};
 
@@ -32,13 +32,13 @@ function draw(t){
  roundRect(px,py,pw,ph,m*1.6);ctx.fillStyle=g;ctx.fill();
  if(suede){ctx.save();ctx.clip();ctx.globalAlpha=.05;const n=rng(7);for(let i=0;i<900;i++){ctx.fillStyle=n()<.5?'#FFF':'#000';ctx.fillRect(px+n()*pw,py+n()*ph,dpr*1.5,dpr*1.5);}ctx.restore();}
  ctx.lineWidth=1.5*dpr;ctx.strokeStyle='#262B3A';roundRect(px,py,pw,ph,m*1.6);ctx.stroke();
- const c1=SW.find(s=>s.id===state.color).c,c2=SW[(SW.findIndex(s=>s.id===state.color)+2)%SW.length].c,dual=state.addons.has('dual');
+ const c1=SW.find(s=>s.id===state.color).c,c2=SW[(SW.findIndex(s=>s.id===state.color)+1)%SW.length].c,dual=state.addons.has('dual')||state.fx.dual;
  if(state.addons.has('ambient')){ctx.save();ctx.shadowColor=c1;ctx.shadowBlur=14*dpr;ctx.strokeStyle=c1;ctx.globalAlpha=.85;ctx.lineWidth=2.2*dpr;roundRect(px+m*.55,py+m*.55,pw-m*1.1,ph-m*1.1,m*1.2);ctx.stroke();ctx.restore();}
  const pad=Math.min(pw,ph)*.07,ix=px+pad,iy=py+pad,iw=pw-2*pad,ih=ph-2*pad,unit=pw/360;
  const n=Math.round(shown);ctx.globalCompositeOperation='lighter';
  for(let i=0;i<n;i++){const s=STARS[i],tw=reduce?1:.72+.28*Math.sin(t/1000*s.sp+s.ph),d=s.r*unit*7.5;ctx.globalAlpha=s.b*tw;ctx.drawImage(sprite(dual&&s.alt?c2:c1),ix+s.x*iw-d/2,iy+s.y*ih-d/2,d,d);}
  ctx.globalAlpha=1;
- if(state.addons.has('shooting')){
+ if(state.addons.has('shooting')||state.fx.shooting){
   const life=1100,now=reduce?600:t;
   if(!meteor||now-meteor.t0>life+1400&&!reduce){const r=rng(Math.floor(now));meteor={t0:now,x:ix+iw*(.15+r()*.55),y:iy+ih*(.1+r()*.35),a:.45+r()*.35};}
   const k=Math.min(1,(now-meteor.t0)/life);
@@ -83,8 +83,14 @@ function build(){
  $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'||t.tag==='Best long-term'?`<em>${esc(t.tag)}</em>`:''}</span><span class="p">${money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
+ $('#play-colors').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
  document.querySelectorAll('.sw').forEach(b=>{b.style.setProperty('--c',SW.find(s=>s.id===b.dataset.c).c);});
- document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{state.color=b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));render();});
+ document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{state.color=b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.c===state.color)));meteor=null;render();});
+ // Preview playground: effects shown in the preview only; they never change the order total.
+ const fxSync=()=>document.querySelectorAll('.fx').forEach(x=>x.setAttribute('aria-pressed',String(state.fx[x.dataset.fx]||state.addons.has(x.dataset.fx))));
+ document.querySelectorAll('.fx').forEach(b=>b.onclick=()=>{const k=b.dataset.fx;state.fx[k]=!state.fx[k];if(!state.fx[k])state.addons.delete(k),document.querySelectorAll('.addon input').forEach(i=>{if(i.value===k)i.checked=false;});meteor=null;fxSync();render();});
+ $('#play-toggle').onclick=()=>{const open=$('#play-panel').hidden;$('#play-panel').hidden=!open;$('#play-toggle').setAttribute('aria-expanded',String(open));$('#play-toggle').classList.add('used');};
+ fxSync();
  $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}${a.tag?` <em class="atag">${esc(a.tag)}</em>`:''}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
  document.querySelectorAll('.addon input').forEach(i=>{i.checked=state.addons.has(i.value);});
  document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
@@ -119,6 +125,9 @@ async function applyCode(c,quiet){
 $('#code-open').onclick=()=>{$('#code-box').hidden=false;$('#code-open').hidden=true;$('#code').focus();};
 $('#code-apply').onclick=()=>applyCode($('#code').value);
 $('#code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyCode($('#code').value);}};
+/* ---------- Phone: hide the customize controls once the preview is stuck to the top ---------- */
+(()=>{const stage=document.querySelector('.stage');if(!stage)return;const sentinel=document.createElement('div');(stage.closest('.build')||stage).before(sentinel);
+ new IntersectionObserver(e=>stage.classList.toggle('stuck',!e[0].isIntersecting&&e[0].boundingClientRect.top<0)).observe(sentinel);})();
 /* ---------- Gallery: arrows, swipe hint, edge fade ---------- */
 (()=>{const reel=$('#reel'),frame=$('#reel-frame');if(!reel)return;
  const step=()=>Math.max(200,reel.clientWidth*.8);
