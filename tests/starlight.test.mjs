@@ -53,6 +53,7 @@ test('Stripe webhook marks the deposit paid once, rejects bad signatures',async(
  assert.equal(db.prepare('SELECT status FROM starlight_orders WHERE id=?').get(id).status,'deposit-paid');
  assert.equal(db.prepare('SELECT amount FROM starlight_payments WHERE order_id=?').get(id).amount,250);
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id=?").get('telegram-starlight-paid-'+id).n,1);
+ const paid=JSON.parse(db.prepare('SELECT payload FROM outbox WHERE id=?').get('telegram-starlight-paid-'+id).payload);assert.equal(paid.package,'500 stars');assert.equal(paid.addons,'None');
 });
 test('starlight contacts get a personal Starlit link in Brevo',async()=>{
  const {brevoPayload}=await import('../server/brevo.mjs');

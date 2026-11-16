@@ -84,7 +84,7 @@ export async function stripeWebhook(raw,signature){
   const stamp=now();
   await q('INSERT INTO starlight_payments(order_id,session_id,amount,paid_at) VALUES($1,$2,$3,$4)',[id,s.id,Math.round(Number(s.amount_total||0)/100),stamp]);
   await q("UPDATE starlight_orders SET status='deposit-paid' WHERE id=$1",[id]);
-  await job(q,'telegram-starlight-paid-'+id,'telegram',{id,stage:'💰 Starlit deposit PAID '+money(Math.round(Number(s.amount_total||0)/100))+' · book the installer',firstName:order.first_name,phone:order.phone,email:order.email,year:order.year,make:order.make,model:order.model,desiredDate:order.desired_date,timeWindow:order.time_window,package:order.stars+' stars',total:money(order.total),balance:money(order.total-order.deposit)});
+  await job(q,'telegram-starlight-paid-'+id,'telegram',{id,stage:'💰 Starlit deposit PAID '+money(Math.round(Number(s.amount_total||0)/100))+' · book the installer',firstName:order.first_name,phone:order.phone,email:order.email,year:order.year,make:order.make,model:order.model,desiredDate:order.desired_date,timeWindow:order.time_window,package:Number(order.stars).toLocaleString('en-US')+' stars',addons:(JSON.parse(order.addons||'[]').map(id=>starlightCatalog.addons.find(x=>x.id===id)).filter(Boolean).map(x=>x.name).join(', '))||'None',notes:order.notes||undefined,total:money(order.total),balance:money(order.total-order.deposit)});
   fresh=true;
  });
  if(fresh)await meta('Purchase',id+'-deposit',origin(),{em:[hash(order.email)],ph:[hash(order.phone.length===10?'1'+order.phone:order.phone)]});
