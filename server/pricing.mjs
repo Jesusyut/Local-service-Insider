@@ -7,3 +7,11 @@ export function computeRange(values,seed=null){
 }
 export function verdict(amount,range){if(!range)return {verdict:'No data',explanation:'Not enough local data yet. Your submission helps build a better San Diego area price guide.'};if(amount===null)return {verdict:'Typical range',explanation:'See the current local range for this service and vehicle type.'};if(amount<range.low)return {verdict:'Low',explanation:'Below the local range. Ask what film or product they use and what is included.'};if(amount>range.high)return {verdict:'High',explanation:'Above the local range. Ask about preparation, warranty, and premium products.'};return {verdict:'Fair',explanation:'Your quote falls within the local range for this service and vehicle type.'};}
 export function validZip(zip){return /^(919|920|921)\d{2}$/.test(zip);}
+
+// Owner-configured expected add-ons, applied once to starlight base estimates.
+// Keep the researched base prices intact; this is not a published shop fee.
+export const starlightAddonAllowance=570;
+export function withExpectedAddons(option,range){
+ if(!range||!option.startsWith('starlight:')||range.addonAllowance===starlightAddonAllowance)return range;
+ return {...range,low:Number(range.low)+starlightAddonAllowance,typical:Number(range.typical)+starlightAddonAllowance,high:Number(range.high)+starlightAddonAllowance,addonAllowance:starlightAddonAllowance,source_note:[range.source_note,`Includes owner-configured $${starlightAddonAllowance} expected add-on allowance.`].filter(Boolean).join(' ')};
+}

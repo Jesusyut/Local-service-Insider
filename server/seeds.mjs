@@ -5,7 +5,7 @@ export const estimateNotes={
  detail:'San Diego published detailing packages, from basic cleaning to deep detail. Size, condition and scope affect the final quote.',
  coating:'San Diego published ceramic-coating packages across protection terms. Paint correction and vehicle size affect the final quote.',
  body:'San Diego published dent, bumper and repaint references. Structural collision repairs are excluded; damage inspection is required.',
- starlight:'Broader California reference from Lancaster, not a San Diego price survey. Star count, roof fitment and fabric affect the final quote.',
+ starlight:'Broader California reference from Lancaster, not a San Diego price survey. Displayed estimates add a $570 allowance for expected add-ons. Star count, roof fitment and fabric affect the final quote.',
  oil:'San Diego oil-change reference only, up to five quarts. Other mechanical repairs require diagnosis and a written quote; extra oil, filters and tax may cost more.',
  smog:'San Diego published inspection prices include the $8.25 certificate. Shop fees vary; older or heavy-duty vehicles may cost more. Check your DMV notice for testing and STAR requirements.',
  lighting:'Broader California ambient-lighting reference from Ripon, not a San Diego price survey. Headlight upgrades and exterior lighting are excluded; fitment and extras need a quote.'

@@ -13,7 +13,7 @@ import {query,transaction,init} from './db.mjs';
 import {services,options,types,drivers,newsletterConsent,leadConsent,copy} from './catalog.mjs';
 import {market} from './seeds.mjs';
 import {reportEmail} from './report-copy.mjs';
-import {computeRange,verdict,validZip} from './pricing.mjs';
+import {computeRange,verdict,validZip,withExpectedAddons} from './pricing.mjs';
 import {enqueue,drain,hash,meta,deliver} from './integrations.mjs';
 const now=()=>new Date().toISOString();
 const production=process.env.NODE_ENV==='production';
@@ -38,10 +38,10 @@ async function rangeFor(option,type){
  query('SELECT low,typical,high,updated_at,source_note FROM market_price_ranges WHERE market=$1 AND service_option_id=$2 AND vehicle_type=$3',[market,option,type]),
  query('SELECT low,typical,high,updated_at,source_note FROM market_service_ranges WHERE market=$1 AND service_id=$2 AND vehicle_type=$3',[market,option.split(':')[0],type])]);
  const values=a.rows.filter(r=>JSON.parse(r.payload).market===market&&(r.zip===''||validZip(r.zip))).map(r=>Number(r.amount));
- const exact=computeRange(values,b.rows[0]||null);if(exact)return exact;
+ const exact=computeRange(values,b.rows[0]||null);if(exact)return withExpectedAddons(option,exact);
  // An unspecified coating duration can use the broader coating/body-type range.
  // Coverage-specific tint/PPF/wrap options must not inherit unrelated job scopes.
- if(f.rows[0])return {...f.rows[0],source:'service-fallback',samples:values.length};
+ if(f.rows[0])return withExpectedAddons(option,{...f.rows[0],source:'service-fallback',samples:values.length});
  return null;
 }
 let catalogCache;
