@@ -74,7 +74,7 @@ function personalize(){
  if($('#date').value&&$('#date').value<cfg.minDate)$('#date').value='';
  for(const a of p('addons').split(','))if(cfg.addons.some(x=>x.id===a))state.addons.add(a);
  const car=[p('year'),p('make'),p('model')].filter(Boolean).join(' ');
- if(name){$('#eyebrow').textContent='Prepared for '+name+(car?' · '+car:'');$('#hero').textContent=name+', here’s your night sky.';$('#lede').textContent=`This is the package we talked about, drawn to scale. Change anything you like, then lock your install day with a ${money(cfg.deposit)} deposit.`;document.title='Your starlight quote · Starlit Interiors';}
+ if(name){$('#eyebrow').textContent='Prepared for '+name+(car?' · '+car:'');$('#hero').textContent=name+', here’s your night sky.';$('#lede').textContent=`Your package, drawn to scale and installed the same day. Change anything you like, then lock your day with ${money(cfg.deposit)} down.`;document.title='Your starlight quote · Starlit Interiors';}
 }
 function build(){
  const preset=Number(params.get('stars'));if(cfg.tiers.some(t=>t.stars===preset))state.stars=preset;shown=state.stars;

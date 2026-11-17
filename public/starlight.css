@@ -158,3 +158,22 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 .pv-card form{display:flex;flex-direction:column;gap:14px}
 @media(max-width:899px){.pv-grid{grid-template-areas:"copy" "card"}.pv-copy .pv-shot,.pv-copy .pv-points{order:3}.pv-card{order:2}.pv-grid{display:flex;flex-direction:column}.pv-copy{display:contents}.pv-copy>.eyebrow{order:0}.pv-copy>h1{order:0}.pv-copy>.lede{order:1}}
 @media(min-width:900px){.pv-grid{grid-template-columns:minmax(0,1.1fr) 420px;gap:56px;align-items:start}.pv-card{position:sticky;top:24px}}
+.promise{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.promise li{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:20px;border:1px solid #2E3A5C;background:#10162A;font-size:14px;font-weight:600;color:var(--ink)}
+.promise li:first-child{border-color:#4C8DFF;background:#16234A}
+.promise svg,.feat svg,.assure svg{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:#7DB0FF;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.feat{display:flex;flex-direction:column;gap:12px}
+.feat h3{margin:0;font:700 22px var(--display)}
+.feat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ft{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:12px;background:var(--white);border:1px solid var(--line);min-width:0}
+.ft svg{width:26px;height:26px}
+.ft b{display:block;font-size:15px;margin-bottom:2px}
+.ft span{font-size:13px;line-height:1.4;color:var(--muted)}
+.ft-wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:14px;border-color:#4C8DFF;background:linear-gradient(135deg,#16234A,#11141C)}
+.ft-wide svg{width:34px;height:34px}
+.ft-wide b{font:700 22px var(--display);color:var(--ink)}
+.ft-wide span{color:#C5CAD4;font-size:14px}
+.assure{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.assure li{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--ink-2)}
+@media(min-width:900px){.feat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ft span{display:block}
