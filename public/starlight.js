@@ -6,7 +6,7 @@ const source=Object.fromEntries([...params].filter(([k])=>k.startsWith('utm_')||
 const requestId=crypto.randomUUID();
 const SW=[{id:'white',name:'Cool white',c:'#EEF2FF'},{id:'warm',name:'Warm white',c:'#FFE3AE'},{id:'blue',name:'Ice blue',c:'#7DB3FF'},{id:'purple',name:'Purple',c:'#B48BFF'},{id:'red',name:'Red',c:'#FF6A6A'}];
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
-let cfg,token='',state={stars:750,addons:new Set(),color:'blue',time:'',code:null,promo:null,fx:{dual:true,shooting:true}};
+let cfg,token='',state={stars:500,addons:new Set(),color:'blue',time:'',code:null,promo:null,fx:{dual:true,shooting:true}};
 async function api(path,data){const r=await fetch(path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'Please try again.');return b;}
 const pixel=(name,data,id)=>{if(window.fbq)window.fbq('track',name,data,id?{eventID:id}:{});};
 

@@ -62,7 +62,7 @@ test('starlight contacts get a personal Starlit link in Brevo',async()=>{
  assert.equal(p.attributes.LPC_STARLIT_URL,'https://localserviceinsider.com/starlit?code=INSIDER');
  assert.equal(brevoPayload({email:'a@b.co',serviceId:'starlight',requestId:'3bb09784-06f0-4a73-8624-b7f876f701e5'},{leadListId:'3'}).attributes.LPC_STARLIT_URL,'https://localserviceinsider.com/q/3bb09784');
  const {starlitLink}=await import('../server/starlit-links.mjs');
- assert.equal(starlitLink({firstName:'Antoni (Salim)',year:2026,make:'Kia GT Line K5',model:'K5 GT Line',desiredDate:'2026-11-18',timeWindow:'morning'}),'https://localserviceinsider.com/starlit?name=Antoni&year=2026&make=Kia&model=K5%20GT%20Line&date=2026-11-18&time=Morning&stars=750&code=INSIDER');
+ assert.equal(starlitLink({firstName:'Antoni (Salim)',year:2026,make:'Kia GT Line K5',model:'K5 GT Line',desiredDate:'2026-11-18',timeWindow:'morning'}),'https://localserviceinsider.com/starlit?name=Antoni&year=2026&make=Kia&model=K5%20GT%20Line&date=2026-11-18&time=Morning&stars=500&code=INSIDER');
  assert.match(starlitLink({firstName:'angelina'}),/name=Angelina/);
  assert.equal(p.attributes.LPC_EST_HIGH_TEXT,'$2,000');
  assert.equal(brevoPayload({email:'a@b.co',serviceId:'tint'},{leadListId:'3'}).attributes.LPC_STARLIT_URL,undefined);
