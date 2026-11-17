@@ -79,7 +79,8 @@ function personalize(){
 function build(){
  const preset=Number(params.get('stars'));if(cfg.tiers.some(t=>t.stars===preset))state.stars=preset;shown=state.stars;
  personalize();
- if(params.get('code'))applyCode(params.get('code'),true);
+ // ?code=INSIDER&promo=BOOK (or code repeated) applies both: the member price and the promo.
+ for(const c of [...params.getAll('code'),...params.getAll('promo')].filter(Boolean))applyCode(c,true);
  $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'||t.tag==='Best long-term'?`<em>${esc(t.tag)}</em>`:''}</span><span class="p">${money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
