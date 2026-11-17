@@ -17,7 +17,8 @@ export const starlightCatalog={
   {id:'dual',name:'Dual color',price:295,note:'Two star colors at once, set from the app.'},
   {id:'ambient',name:'Ambient trim lighting',price:495,note:'Matching light lines in the doors and dash.'},
   {id:'suede',name:'Suede headliner',price:495,note:'New suede-wrapped liner behind the stars.'}],
- times:['Morning','Midday','Afternoon'],
+ // Same-day turnaround only works with a 9–10 AM drop-off.
+ times:['Morning'],
  // Member price per package (list is the walk-in price). Wholesale is 499/599/699/799/899,
  // so members still leave $450-$600 margin per job.
  codes:{INSIDER:{label:'Local Insider member price',prices:{500:949,600:1079,750:1225,850:1349,1000:1499}}},
@@ -88,7 +89,7 @@ export async function stripeWebhook(raw,signature){
   const stamp=now();
   await q('INSERT INTO starlight_payments(order_id,session_id,amount,paid_at) VALUES($1,$2,$3,$4)',[id,s.id,Math.round(Number(s.amount_total||0)/100),stamp]);
   await q("UPDATE starlight_orders SET status='deposit-paid' WHERE id=$1",[id]);
-  await job(q,'telegram-starlight-paid-'+id,'telegram',{id,stage:'💰 Starlit deposit PAID '+money(Math.round(Number(s.amount_total||0)/100))+' · book the installer',firstName:order.first_name,phone:order.phone,email:order.email,year:order.year,make:order.make,model:order.model,desiredDate:order.desired_date,timeWindow:order.time_window,package:Number(order.stars).toLocaleString('en-US')+' stars',addons:(JSON.parse(order.addons||'[]').map(id=>starlightCatalog.addons.find(x=>x.id===id)).filter(Boolean).map(x=>x.name).join(', '))||'None',notes:order.notes||undefined,total:money(order.total),balance:money(order.total-order.deposit)});
+  await job(q,'telegram-starlight-paid-'+id,'telegram',{id,stage:'💰 Starlit deposit PAID '+money(Math.round(Number(s.amount_total||0)/100))+' · book the installer',firstName:order.first_name,phone:order.phone,email:order.email,year:order.year,make:order.make,model:order.model,desiredDate:order.desired_date==='flexible'?'Flexible · holding November price':order.desired_date,timeWindow:'9–10 AM drop-off (same day)',package:Number(order.stars).toLocaleString('en-US')+' stars',addons:(JSON.parse(order.addons||'[]').map(id=>starlightCatalog.addons.find(x=>x.id===id)).filter(Boolean).map(x=>x.name).join(', '))||'None',notes:order.notes||undefined,total:money(order.total),balance:money(order.total-order.deposit)});
   fresh=true;
  });
  if(fresh)await meta('Purchase',id+'-deposit',origin(),{em:[hash(order.email)],ph:[hash(order.phone.length===10?'1'+order.phone:order.phone)]});
@@ -110,18 +111,20 @@ export async function placeStarlightOrder(b,{turnstile}){
  if(!/^[0-9a-f-]{36}$/i.test(id))fail('Please refresh and try again.');
  if(!Number.isInteger(year)||year<1990||year>new Date().getFullYear()+2||!make||!model)fail('Enter your car’s year, make and model.');
  const parsed=new Date(date+'T12:00:00Z');
- if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==date||date<tomorrow())fail('Pick an install day from tomorrow on.');
- if(!starlightCatalog.times.includes(time))fail('Pick a drop-off time.');
+ // Date is optional: the deposit can lock November pricing and they schedule later ('flexible').
+ if(date&&(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==date||date<tomorrow()))fail('Pick an install day from tomorrow on, or leave it blank.');
+ if(time&&!starlightCatalog.times.includes(time))fail('Pick a drop-off time.');
  if(!name||!/^\S+@\S+\.\S+$/.test(email)||!/^(1)?\d{10}$/.test(phone))fail('Enter your name, a valid email and a US phone number.');
+ const day=date||'flexible',slot='Morning';
  let fresh=false;
  await transaction(async q=>{
   // The browser-generated ID makes a retried submit a no-op.
   if((await q('SELECT id FROM starlight_orders WHERE id=$1',[id])).rows[0])return;
   const stamp=now();
   await q('INSERT INTO events(id,name,campaign,created_at) VALUES($1,$2,$3,$4)',[id,'Lead',source.utm_campaign,stamp]);
-  await q('INSERT INTO starlight_orders(id,first_name,email,phone,year,make,model,stars,addons,total,deposit,desired_date,time_window,notes,status,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)',[id,name,email,phone,year,make,model,tier.stars,JSON.stringify(addons.map(a=>a.id)),total,deposit,date,time,notes,'awaiting-deposit',JSON.stringify(source),stamp]);
+  await q('INSERT INTO starlight_orders(id,first_name,email,phone,year,make,model,stars,addons,total,deposit,desired_date,time_window,notes,status,source,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)',[id,name,email,phone,year,make,model,tier.stars,JSON.stringify(addons.map(a=>a.id)),total,deposit,day,slot,notes,'awaiting-deposit',JSON.stringify(source),stamp]);
   if(codeName)await q('INSERT INTO starlight_order_codes(order_id,code,discount,list_total,created_at) VALUES($1,$2,$3,$4,$5)',[id,codeName,off,list,stamp]);
-  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date,timeWindow:time,package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total)+(codeName?` (${codeName} −${money(off)} off ${money(list)})`:''),balance:money(balance),notes});
+  await job(q,'telegram-starlight-'+id,'telegram',{id,stage:'Starlit order (awaiting $'+deposit+' deposit)',firstName:name,email,phone,service:'Starlight headliner',year,make,model,desiredDate:date||'Flexible · holding November price',timeWindow:'9–10 AM drop-off (same day)',package:`${tier.stars.toLocaleString('en-US')} stars (${money(tier.price)})`,addons:addons.map(a=>`${a.name} ${money(a.price)}`).join(', ')||'None',total:money(total)+(codeName?` (${codeName} −${money(off)} off ${money(list)})`:''),balance:money(balance),notes});
   fresh=true;
  });
  if(fresh)await meta('Lead',id,process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||'http://localhost:3000',{em:[hash(email)],ph:[hash(phone.length===10?'1'+phone:phone)]});

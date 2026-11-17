@@ -6,7 +6,7 @@ const source=Object.fromEntries([...params].filter(([k])=>k.startsWith('utm_')||
 const requestId=crypto.randomUUID();
 const SW=[{id:'white',name:'Cool white',c:'#EEF2FF'},{id:'warm',name:'Warm white',c:'#FFE3AE'},{id:'blue',name:'Ice blue',c:'#7DB3FF'},{id:'purple',name:'Purple',c:'#B48BFF'},{id:'red',name:'Red',c:'#FF6A6A'}];
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}};
-let cfg,token='',state={stars:500,addons:new Set(),color:'blue',time:'',code:null,promo:null,fx:{dual:true,shooting:true}};
+let cfg,token='',state={stars:500,addons:new Set(),color:'blue',time:'Morning',code:null,promo:null,fx:{dual:true,shooting:true}};
 async function api(path,data){const r=await fetch(path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const b=await r.json().catch(()=>({}));if(!r.ok)throw Error(b.error||'Please try again.');return b;}
 const pixel=(name,data,id)=>{if(window.fbq)window.fbq('track',name,data,id?{eventID:id}:{});};
 
@@ -89,9 +89,6 @@ function build(){
  $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}${a.tag?` <em class="atag">${esc(a.tag)}</em>`:''}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
  document.querySelectorAll('.addon input').forEach(i=>{i.checked=state.addons.has(i.value);});
  document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{state.fx={dual:false,shooting:false};i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
- $('#times').innerHTML=cfg.times.map(t=>`<button type="button" class="chip" aria-pressed="false" data-t="${t}">${t}</button>`).join('');
- const pt=params.get('time');if(cfg.times.includes(pt)){state.time=pt;document.querySelectorAll('#times .chip').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.t===pt)));}
- document.querySelectorAll('#times .chip').forEach(b=>b.onclick=()=>{state.time=b.dataset.t;document.querySelectorAll('#times .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
  $('#date').min=cfg.minDate;$('#year').placeholder=String(new Date().getFullYear());
  $('#consent').textContent=cfg.consent;
  $('#pay').textContent=cfg.onlineDeposit?`Reserve with ${money(cfg.deposit)} deposit`:'Request my install day';
@@ -125,10 +122,11 @@ $('#code').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyCode($('#co
  const step=()=>Math.max(200,reel.clientWidth*.8);
  $('#reel-next').onclick=()=>reel.scrollBy({left:step(),behavior:'smooth'});
  $('#reel-prev').onclick=()=>reel.scrollBy({left:-step(),behavior:'smooth'});
- const update=()=>{const max=reel.scrollWidth-reel.clientWidth-4;frame.classList.toggle('at-start',reel.scrollLeft<=4);frame.classList.toggle('at-end',reel.scrollLeft>=max);$('#reel-prev').disabled=reel.scrollLeft<=4;$('#reel-next').disabled=reel.scrollLeft>=max;if(reel.scrollLeft>30)frame.classList.add('seen');};
+ const update=()=>{if(!reel.isConnected)return;const max=reel.scrollWidth-reel.clientWidth-4;frame.classList.toggle('at-start',reel.scrollLeft<=4);frame.classList.toggle('at-end',reel.scrollLeft>=max);$('#reel-prev').disabled=reel.scrollLeft<=4;$('#reel-next').disabled=reel.scrollLeft>=max;if(reel.scrollLeft>30)frame.classList.add('seen');};
  reel.addEventListener('scroll',update,{passive:true});new ResizeObserver(update).observe(reel);update();
 })();
 /* ---------- Checkout ---------- */
+const whenText=d=>d?`${dayName(d)}, 9–10 AM drop-off`:'Flexible, schedule when ready';
 const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 function showError(m){const e=$('#err');e.hidden=false;e.textContent=m;e.scrollIntoView({behavior:'smooth',block:'center'});}
 function finish(html){$('#buybar').remove();$('#app').innerHTML=`<header class="store-head"><p class="wordmark brand">Starlit<span>Interiors</span></p></header><section class="done">${html}</section>`;window.scrollTo({top:0});}
@@ -137,18 +135,17 @@ $('#book').onsubmit=async e=>{
  e.preventDefault();$('#err').hidden=true;
  const v=id=>$('#'+id).value.trim(),year=Number(v('year')),phone=v('phone').replace(/\D/g,'');
  if(!Number.isInteger(year)||year<1990||!v('make')||!v('model'))return showError('Enter your car’s year, make and model.');
- if(!v('date')||v('date')<cfg.minDate)return showError('Pick an install day from tomorrow on.');
- if(!state.time)return showError('Pick a drop-off time.');
+ if(v('date')&&v('date')<cfg.minDate)return showError('Pick an install day from tomorrow on, or leave it blank.');
  if(!v('firstName')||!/^\S+@\S+\.\S+$/.test(v('email'))||!/^(1)?\d{10}$/.test(phone))return showError('Enter your name, a valid email and a US mobile number.');
  const btn=$('#pay'),label=btn.textContent;btn.disabled=true;btn.textContent='Saving your day…';
  const {tier,extras,off}=totals();
  try{
   const r=await api('/api/starlight-order',{id:requestId,stars:state.stars,addons:[...state.addons],year,make:v('make'),model:v('model'),date:v('date'),time:state.time,firstName:v('firstName'),email:v('email'),phone,notes:v('notes'),disclosureVersion:cfg.disclosureVersion,code:state.code?.code,promo:state.promo?.code,source,turnstileToken:token});
-  const order={id:r.id,name:v('firstName'),car:`${year} ${v('make')} ${v('model')}`,date:v('date'),time:state.time,total:r.total,deposit:r.deposit,balance:r.balance,rows:[[`${tier.stars.toLocaleString('en-US')} star headliner`,money(tier.price)],...extras.map(a=>[a.name,money(a.price)]),...(state.code?[[state.code.label,'−'+money(tier.price-state.code.prices[tier.stars])]]:[]),...(state.promo?[[state.promo.label,'−'+money(state.promo.off)]]:[]),['Install',`${dayName(v('date'))}, ${state.time.toLowerCase()}`],['Car',`${year} ${v('make')} ${v('model')}`]]};
+  const order={id:r.id,name:v('firstName'),car:`${year} ${v('make')} ${v('model')}`,date:v('date'),time:state.time,total:r.total,deposit:r.deposit,balance:r.balance,rows:[[`${tier.stars.toLocaleString('en-US')} star headliner`,money(tier.price)],...extras.map(a=>[a.name,money(a.price)]),...(state.code?[[state.code.label,'−'+money(tier.price-state.code.prices[tier.stars])]]:[]),...(state.promo?[[state.promo.label,'−'+money(state.promo.off)]]:[]),['Install',whenText(v('date'))],['Car',`${year} ${v('make')} ${v('model')}`]]};
   store.set('starlight-order',order);
   pixel('Lead',{value:r.total,currency:'USD',content_name:'Starlight headliner'},r.eventId);
   if(r.checkoutUrl){pixel('InitiateCheckout',{value:r.deposit,currency:'USD'});btn.textContent='Opening secure checkout…';location.href=r.checkoutUrl;return;}
-  finish(`<h1>You’re on the calendar, ${esc(order.name)}.</h1><p class="lede">We’re confirming ${esc(dayName(order.date))} (${esc(order.time.toLowerCase())}) with the installer now. Watch for a text with your secure ${money(order.deposit)} deposit link. Your day locks once it’s paid.</p>${receiptHtml(order)}<p class="fine">Questions? ${cfg.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to the confirmation email and a real person gets back to you.'}</p>`);
+  finish(`<h1>${order.date?`You’re on the calendar, ${esc(order.name)}.`:`Your November price is saved, ${esc(order.name)}.`}</h1><p class="lede">${order.date?`We’re confirming ${esc(dayName(order.date))} (9–10 AM drop-off) with the installer now.`:'Your November price is saved.'} Watch for a text with your secure ${money(order.deposit)} deposit link. ${order.date?'Your day locks':'Your November price locks'} once it’s paid.</p>${receiptHtml(order)}<p class="fine">Questions? ${cfg.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to the confirmation email and a real person gets back to you.'}</p>`);
  }catch(err){btn.disabled=false;btn.textContent=label;showError(err.message);window.turnstile?.reset?.();}
 };
 
@@ -156,6 +153,6 @@ $('#book').onsubmit=async e=>{
 function paidView(){
  const o=store.get('starlight-order');
  if(o&&!store.get('starlight-paid-'+o.id)){pixel('Purchase',{value:o.deposit,currency:'USD',content_name:'Starlight deposit'},'paid-'+o.id);store.set('starlight-paid-'+o.id,true);}
- finish(`<h1>Deposit received. Your day is locked${o?', '+esc(o.name):''}.</h1><p class="lede">${o?`See you ${esc(dayName(o.date))} (${esc(o.time.toLowerCase())}). `:''}We’ll text you the shop address and a reminder the day before. The balance is due at drop-off, before work starts.</p>${o?receiptHtml(o):''}<p class="fine">Questions? ${cfg?.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to your confirmation email.'}</p>`);
+ finish(`<h1>Deposit received${o?', '+esc(o.name):''}. ${o&&!o.date?'Your November price is locked.':'Your day is locked.'}</h1><p class="lede">${o?.date?`See you ${esc(dayName(o.date))}, 9–10 AM drop-off. We’ll text you the shop address and a reminder the day before.`:'Your November price is locked. Text us when you’re ready to pick your day, and we’ll send the shop address and a reminder the day before.'} The balance is due at drop-off, before work starts.</p>${o?receiptHtml(o):''}<p class="fine">Questions? ${cfg?.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to your confirmation email.'}</p>`);
 }
 api('/api/starlight').then(c=>{cfg=c;if(params.get('paid')==='1')return paidView();build();if(!reduce)requestAnimationFrame(loop);}).catch(()=>showError('The store is loading slowly. Refresh in a moment.'));

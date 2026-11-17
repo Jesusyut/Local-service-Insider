@@ -18,6 +18,7 @@ test('order totals are computed on the server, validated, and retries do not dup
  assert.equal((await api('/api/starlight-order',{...body,addons:['free']})).status,400);
  assert.equal((await api('/api/starlight-order',{...body,date:'2020-01-01'})).status,400);
  assert.equal((await api('/api/starlight-order',{...body,time:'Midnight'})).status,400);
+ const flex=await api('/api/starlight-order',{...body,id:randomUUID(),date:'',time:''});assert.equal(flex.status,200);
  assert.equal((await api('/api/starlight-order',{...body,phone:'123'})).status,400);
  assert.equal((await api('/api/starlight-order',{...body,disclosureVersion:'old'})).status,400);
  const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);
@@ -25,7 +26,8 @@ test('order totals are computed on the server, validated, and retries do not dup
  assert.equal((await api('/api/starlight-order',body)).status,200);
  const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
  const o=db.prepare('SELECT * FROM starlight_orders WHERE id=?').get(body.id);assert.equal(o.total,2340);assert.equal(o.stars,750);assert.equal(o.phone,'6195550134');assert.equal(o.status,'awaiting-deposit');
- assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'telegram-starlight-%'").get().n,1);assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'newsletter-starlight-%'").get().n,0);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM subscribers WHERE email=?').get('antoni@example.test').n,0);
+ assert.equal(db.prepare('SELECT COUNT(*) AS n FROM outbox WHERE id=?').get('telegram-starlight-'+body.id).n,1);
+ assert.equal(db.prepare('SELECT desired_date FROM starlight_orders WHERE id=?').get(flex.data.id).desired_date,'flexible');assert.equal(db.prepare("SELECT COUNT(*) AS n FROM outbox WHERE id LIKE 'newsletter-starlight-%'").get().n,0);assert.equal(db.prepare('SELECT COUNT(*) AS n FROM subscribers WHERE email=?').get('antoni@example.test').n,0);
  const t=JSON.parse(db.prepare("SELECT payload FROM outbox WHERE id=?").get('telegram-starlight-'+body.id).payload);assert.equal(t.total,'$2,340');assert.match(t.addons,/Shooting stars \$295/);
  const {telegramText}=await import('../server/telegram.mjs');assert.match(telegramText(t),/Balance at drop-off: \$2,090/);
 });
@@ -33,7 +35,7 @@ test('member code takes a real discount off list, server-side only',async()=>{
  assert.equal((await api('/api/starlight-code?code=nope')).status,404);
  const c=await api('/api/starlight-code?code=insider');assert.equal(c.status,200);assert.equal(c.data.prices[750],1225);
  assert.equal((await api('/api/starlight')).data.codes,undefined);
- const body={id:randomUUID(),stars:1000,addons:[],year:2025,make:'Nissan',model:'Altima',date:tomorrow(),time:'Midday',firstName:'Angelina',email:'ang@example.test',phone:'6265550134',code:'INSIDER',disclosureVersion:'starlit-v1'};
+ const body={id:randomUUID(),stars:1000,addons:[],year:2025,make:'Nissan',model:'Altima',date:tomorrow(),time:'Morning',firstName:'Angelina',email:'ang@example.test',phone:'6265550134',code:'INSIDER',disclosureVersion:'starlit-v1'};
  assert.equal((await api('/api/starlight-order',{...body,code:'FAKE'})).status,400);
  const ok=await api('/api/starlight-order',body);assert.equal(ok.status,200);assert.equal(ok.data.total,1499);assert.equal(ok.data.balance,1249);
  const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'t.db'));
@@ -42,7 +44,7 @@ test('member code takes a real discount off list, server-side only',async()=>{
 test('Stripe webhook marks the deposit paid once, rejects bad signatures',async()=>{
  const {createHmac}=await import('node:crypto');
  const id=randomUUID();
- const order={id,stars:500,addons:[],year:2024,make:'Tesla',model:'Model 3',date:tomorrow(),time:'Afternoon',firstName:'Maya',email:'maya@example.test',phone:'6195550199',code:'INSIDER',disclosureVersion:'starlit-v1'};
+ const order={id,stars:500,addons:[],year:2024,make:'Tesla',model:'Model 3',date:tomorrow(),time:'Morning',firstName:'Maya',email:'maya@example.test',phone:'6195550199',code:'INSIDER',disclosureVersion:'starlit-v1'};
  assert.equal((await api('/api/starlight-order',order)).status,200);
  const raw=JSON.stringify({type:'checkout.session.completed',data:{object:{id:'cs_test_1',client_reference_id:id,payment_status:'paid',amount_total:25000}}});
  const send=async sig=>(await fetch(base+'/api/stripe-webhook',{method:'POST',headers:{'Content-Type':'application/json','Stripe-Signature':sig},body:raw})).status;
