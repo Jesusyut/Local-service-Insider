@@ -182,3 +182,4 @@ body.starlit{--ground:#07080D;--ink:#F3F4F7;--ink-2:#C5CAD4;--muted:#8A92A2;--li
 .dropoff{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:10px;border:1.5px solid #4C8DFF;background:#10162A}
 .dropoff b{font-size:16px}.dropoff span{font-size:14px;color:var(--muted)}
 .dayhint{margin-top:-6px}
+.annc a{color:#F3F4F7;font-weight:700;text-decoration:underline;text-underline-offset:2px}
