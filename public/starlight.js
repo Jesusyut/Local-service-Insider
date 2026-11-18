@@ -1,4 +1,6 @@
-// Starlit Interiors — separate-brand quote + checkout page sent to leads 1:1: to-scale star preview, package + extras, install day, $250 deposit.
+// Starlit Interiors — separate-brand quote + checkout page sent to leads 1:1: to-scale star preview, package + extras, install day, deposit.
+// Package prices are not shown on the page: customers call for pricing (the server still prices every order).
+const CALL_FOR_PRICING=true,CALL='Call for pricing';
 const $=s=>document.querySelector(s),params=new URLSearchParams(location.search);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>'$'+Number(v).toLocaleString('en-US');
@@ -60,11 +62,12 @@ function render(){
  document.querySelectorAll('.tier').forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.stars)===state.stars)));
  $('#cap-stars').textContent=tier.stars.toLocaleString('en-US')+' stars';
  canvas.setAttribute('aria-label',`Preview of a headliner with ${tier.stars.toLocaleString('en-US')} stars`);
- $('#rows').innerHTML=`<div class="rrow"><span>${tier.stars.toLocaleString('en-US')} star headliner</span><span>${money(tier.price)}</span></div>`+extras.map(a=>`<div class="rrow"><span>${esc(a.name)}</span><span>${money(a.price)}</span></div>`).join('')+(state.code?`<div class="rrow deal"><span>${esc(state.code.label)} <small>${esc(state.code.code)}</small></span><span>−${money(memberOff)}</span></div>`:'')+(state.promo?`<div class="rrow deal"><span>${esc(state.promo.label)} <small>${esc(state.promo.code)}</small></span><span>−${money(promoOff)}</span></div>`:'')+`<div class="rrow total"><span>Total installed</span><span>${money(total)}</span></div>`;
- $('#deal').hidden=!(state.code||state.promo);if(state.code||state.promo)$('#deal-text').textContent=`${[state.code?.label,state.promo?.label].filter(Boolean).join(' + ')} applied. You save ${money(off)} on ${tier.stars.toLocaleString('en-US')} stars.`;
- document.querySelectorAll('.tier .p').forEach(el=>{const t=cfg.tiers.find(x=>x.stars===Number(el.closest('.tier').dataset.stars));const now=(state.code?state.code.prices[t.stars]:t.price)-(state.promo?state.promo.off:0);el.innerHTML=now<t.price?`<s>${money(t.price)}</s> ${money(now)}`:money(t.price);});
- $('#r-total-h').textContent=money(total);$('#r-dep').textContent=money(cfg.deposit);$('#r-bal').textContent=money(balance);
- $('#bar-total').textContent=money(total);$('#bar-sum').textContent=tier.stars.toLocaleString('en-US')+' stars'+(extras.length?` + ${extras.length} extra${extras.length>1?'s':''}`:'')+` · ${money(cfg.deposit)} today`;
+ const P=v=>CALL_FOR_PRICING?'':v;
+ $('#rows').innerHTML=`<div class="rrow"><span>${tier.stars.toLocaleString('en-US')} star headliner</span><span>${P(money(tier.price))}</span></div>`+extras.map(a=>`<div class="rrow"><span>${esc(a.name)}</span><span>${P(money(a.price))}</span></div>`).join('')+(state.code?`<div class="rrow deal"><span>${esc(state.code.label)} <small>${esc(state.code.code)}</small></span><span>${CALL_FOR_PRICING?'Applied':'−'+money(memberOff)}</span></div>`:'')+(state.promo?`<div class="rrow deal"><span>${esc(state.promo.label)} <small>${esc(state.promo.code)}</small></span><span>${CALL_FOR_PRICING?'Applied':'−'+money(promoOff)}</span></div>`:'')+`<div class="rrow total"><span>${CALL_FOR_PRICING?'Your price':'Total installed'}</span><span>${CALL_FOR_PRICING?CALL:money(total)}</span></div>`;
+ $('#deal').hidden=!(state.code||state.promo);if(state.code||state.promo)$('#deal-text').textContent=`${[state.code?.label,state.promo?.label].filter(Boolean).join(' + ')} applied. ${CALL_FOR_PRICING?'Call or text us for your price.':`You save ${money(off)} on ${tier.stars.toLocaleString('en-US')} stars.`}`;
+ document.querySelectorAll('.tier .p').forEach(el=>{const t=cfg.tiers.find(x=>x.stars===Number(el.closest('.tier').dataset.stars));const now=(state.code?state.code.prices[t.stars]:t.price)-(state.promo?state.promo.off:0);el.innerHTML=CALL_FOR_PRICING?CALL:now<t.price?`<s>${money(t.price)}</s> ${money(now)}`:money(t.price);});
+ $('#r-total-h').textContent=CALL_FOR_PRICING?'':money(total);$('#r-dep').textContent=money(cfg.deposit);$('#r-bal').textContent=money(balance);
+ $('#bar-total').textContent=CALL_FOR_PRICING?CALL:money(total);$('#bar-sum').textContent=tier.stars.toLocaleString('en-US')+' stars'+(extras.length?` + ${extras.length} extra${extras.length>1?'s':''}`:'')+(CALL_FOR_PRICING?' · same-day install':` · ${money(cfg.deposit)} today`);
  redraw();
 }
 // Personal links: ?name=Antoni&email=..&phone=..&year=2026&make=Kia&model=K5&stars=750&addons=shooting,suede&date=2026-11-18&time=Morning
@@ -74,14 +77,14 @@ function personalize(){
  if($('#date').value&&$('#date').value<cfg.minDate)$('#date').value='';
  for(const a of p('addons').split(','))if(cfg.addons.some(x=>x.id===a))state.addons.add(a);
  const car=[p('year'),p('make'),p('model')].filter(Boolean).join(' ');
- if(name){$('#eyebrow').textContent='Prepared for '+name+(car?' · '+car:'');$('#hero').textContent=name+', here’s your night sky.';$('#lede').textContent=`Your package, drawn to scale and installed the same day. Change anything you like, then lock your day with ${money(cfg.deposit)} down.`;document.title='Your starlight quote · Starlit Interiors';}
+ if(name){$('#eyebrow').textContent='Prepared for '+name+(car?' · '+car:'');$('#hero').textContent=name+', here’s your night sky.';$('#lede').textContent=`Your package, drawn to scale and installed the same day. Change anything you like, then lock your day with a deposit.`;document.title='Your starlight quote · Starlit Interiors';}
 }
 function build(){
  const preset=Number(params.get('stars'));if(cfg.tiers.some(t=>t.stars===preset))state.stars=preset;shown=state.stars;
  personalize();
  // ?code=INSIDER&promo=BOOK (or code repeated) applies both: the member price and the promo.
  for(const c of [...params.getAll('code'),...params.getAll('promo')].filter(Boolean))applyCode(c,true);
- $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'||t.tag==='Best long-term'?`<em>${esc(t.tag)}</em>`:''}</span><span class="p">${money(t.price)}</span></button>`).join('');
+ $('#tiers').innerHTML=cfg.tiers.map(t=>`<button type="button" class="tier" role="radio" data-stars="${t.stars}"><span class="dot"></span><span><b>${t.stars.toLocaleString('en-US')} stars</b>${t.tag==='Most popular'||t.tag==='Best long-term'?`<em>${esc(t.tag)}</em>`:''}</span><span class="p">${CALL_FOR_PRICING?CALL:money(t.price)}</span></button>`).join('');
  document.querySelectorAll('.tier').forEach(b=>b.onclick=()=>{state.stars=Number(b.dataset.stars);render();});
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
  document.querySelectorAll('.sw').forEach(b=>{b.style.setProperty('--c',SW.find(s=>s.id===b.dataset.c).c);});
@@ -91,7 +94,7 @@ function build(){
  document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{state.fx={dual:false,shooting:false};i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
  $('#date').min=cfg.minDate;$('#year').placeholder=String(new Date().getFullYear());
  $('#consent').textContent=cfg.consent;
- $('#pay').textContent=cfg.onlineDeposit?`Reserve with ${money(cfg.deposit)} deposit`:'Request my install day';
+ $('#pay').textContent=cfg.onlineDeposit?(CALL_FOR_PRICING?'Reserve my day':`Reserve with ${money(cfg.deposit)} deposit`):'Request my install day';
  if(cfg.phone){
   $('#ask-text').textContent='Call or text us. A real person answers.';
   $('#ask-links').hidden=false;$('#ask-links').innerHTML=`<a href="tel:${cfg.phone.tel}">Call ${esc(cfg.phone.display)}</a><a href="sms:${cfg.phone.tel}">Text us</a>`;
@@ -130,7 +133,7 @@ const whenText=d=>d?`${dayName(d)}, 9–10 AM drop-off`:'Flexible, schedule when
 const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 function showError(m){const e=$('#err');e.hidden=false;e.textContent=m;e.scrollIntoView({behavior:'smooth',block:'center'});}
 function finish(html){$('#buybar').remove();$('#app').innerHTML=`<header class="store-head"><p class="wordmark brand">Starlit<span>Interiors</span></p></header><section class="done">${html}</section>`;window.scrollTo({top:0});}
-function receiptHtml(o){return `<div class="receipt"><div class="receipt-head"><span>Your order</span><span>${money(o.total)}</span></div><div class="receipt-rows">${o.rows.map(([a,b])=>`<div class="rrow"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}</div><div class="due"><div><small>Deposit</small><strong>${money(o.deposit)}</strong></div><div><small>At drop-off</small><strong>${money(o.balance)}</strong></div></div></div>`;}
+function receiptHtml(o){if(CALL_FOR_PRICING)return `<div class="receipt"><div class="receipt-head"><span>Your order</span><span></span></div><div class="receipt-rows">${o.rows.filter(([,b])=>!/^[−-]?\$/.test(b)).map(([a,b])=>`<div class="rrow"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}</div></div>`;return `<div class="receipt"><div class="receipt-head"><span>Your order</span><span>${money(o.total)}</span></div><div class="receipt-rows">${o.rows.map(([a,b])=>`<div class="rrow"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}</div><div class="due"><div><small>Deposit</small><strong>${money(o.deposit)}</strong></div><div><small>At drop-off</small><strong>${money(o.balance)}</strong></div></div></div>`;}
 $('#book').onsubmit=async e=>{
  e.preventDefault();$('#err').hidden=true;
  const v=id=>$('#'+id).value.trim(),year=Number(v('year')),phone=v('phone').replace(/\D/g,'');
@@ -145,7 +148,7 @@ $('#book').onsubmit=async e=>{
   store.set('starlight-order',order);
   pixel('Lead',{value:r.total,currency:'USD',content_name:'Starlight headliner'},r.eventId);
   if(r.checkoutUrl){pixel('InitiateCheckout',{value:r.deposit,currency:'USD'});btn.textContent='Opening secure checkout…';location.href=r.checkoutUrl;return;}
-  finish(`<h1>${order.date?`You’re on the calendar, ${esc(order.name)}.`:`Your November price is saved, ${esc(order.name)}.`}</h1><p class="lede">${order.date?`We’re confirming ${esc(dayName(order.date))} (9–10 AM drop-off) with the installer now.`:'Your November price is saved.'} Watch for a text with your secure ${money(order.deposit)} deposit link. ${order.date?'Your day locks':'Your November price locks'} once it’s paid.</p>${receiptHtml(order)}<p class="fine">Questions? ${cfg.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to the confirmation email and a real person gets back to you.'}</p>`);
+  finish(`<h1>${order.date?`You’re on the calendar, ${esc(order.name)}.`:`Your November price is saved, ${esc(order.name)}.`}</h1><p class="lede">${order.date?`We’re confirming ${esc(dayName(order.date))} (9–10 AM drop-off) with the installer now.`:'Your November price is saved.'} Watch for a text with your secure deposit link. ${order.date?'Your day locks':'Your November price locks'} once it’s paid.</p>${receiptHtml(order)}<p class="fine">Questions? ${cfg.phone?`Call or text ${esc(cfg.phone.display)}.`:'Reply to the confirmation email and a real person gets back to you.'}</p>`);
  }catch(err){btn.disabled=false;btn.textContent=label;showError(err.message);window.turnstile?.reset?.();}
 };
 
