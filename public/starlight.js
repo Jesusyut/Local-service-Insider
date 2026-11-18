@@ -89,7 +89,7 @@ function build(){
  $('#swatches').innerHTML=SW.map(s=>`<button type="button" class="sw" data-c="${s.id}" aria-label="${s.name}" aria-pressed="${s.id===state.color}"></button>`).join('');
  document.querySelectorAll('.sw').forEach(b=>{b.style.setProperty('--c',SW.find(s=>s.id===b.dataset.c).c);});
  document.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{state.color=b.dataset.c;document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.c===state.color)));meteor=null;render();});
- $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}${a.tag?` <em class="atag">${esc(a.tag)}</em>`:''}</b><span>${esc(a.note)}</span></span><span class="p">+${money(a.price)}</span></label>`).join('');
+ $('#addons').innerHTML=cfg.addons.map(a=>`<label class="addon"><input type="checkbox" value="${a.id}"><span><b>${esc(a.name)}${a.tag?` <em class="atag">${esc(a.tag)}</em>`:''}</b><span>${esc(a.note)}</span></span><span class="p">${CALL_FOR_PRICING?'':'+'+money(a.price)}</span></label>`).join('');
  document.querySelectorAll('.addon input').forEach(i=>{i.checked=state.addons.has(i.value);});
  document.querySelectorAll('.addon input').forEach(i=>i.onchange=()=>{state.fx={dual:false,shooting:false};i.checked?state.addons.add(i.value):state.addons.delete(i.value);meteor=null;render();});
  $('#date').min=cfg.minDate;$('#year').placeholder=String(new Date().getFullYear());
